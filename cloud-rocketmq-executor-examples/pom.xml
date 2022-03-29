@@ -1,0 +1,43 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.cloud.platform</groupId>
+    <artifactId>rocketmq-executor-examples</artifactId>
+    <version>1.0.0-RELEASES</version>
+    <packaging>pom</packaging>
+
+    <parent>
+        <groupId>com.cloud.platform</groupId>
+        <artifactId>rocketmq-server</artifactId>
+        <version>1.6.0-RELEASES</version>
+    </parent>
+
+    <modules>
+        <module>rocketmq-example-producer</module>
+        <module>rocketmq-example-consumer</module>
+    </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.cloud.platform</groupId>
+            <artifactId>cloud-rocketmq-spring-boot-starter</artifactId>
+            <version>1.6.0-RELEASES</version>
+        </dependency>
+        <!--swagger start -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-boot-starter</artifactId>
+        </dependency>
+        <!--swagger end -->
+    </dependencies>
+
+</project>

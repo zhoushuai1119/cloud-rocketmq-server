@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: rocketmq-example-producer
+
+#rocketmq配置
+cloud:
+  rocketmq:
+    #不能使用name-server
+    nameServer: 139.196.208.53:9876
+    producer:
+      group: p-${spring.application.name}
+#    consumer:
+#      #消费者组名称
+#      c-${spring.application.name}:
+#        subscription:
+#          # topic : eventCode  最好都大写
+#          TP_USER_SERVER_TOPIC_TRANSACTION: EC_USER_SERVER_TRANSACTION
+#          TP_USER_SERVER_TOPIC: EC_USER_SERVER
+#          TP_PAYMENT_SERVER_TOPIC: EC_PAYMENT_SERVER

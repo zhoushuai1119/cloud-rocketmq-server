@@ -1,0 +1,21 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: rocketmq-example-consumer
+
+#rocketmq配置
+cloud:
+  rocketmq:
+    #不能使用name-server
+    nameServer: 139.196.208.53:9876
+    producer:
+      group: p-${spring.application.name}
+    consumer:
+      #消费者组名称
+      c-${spring.application.name}:
+        subscription:
+          # topic : eventCode  最好都大写
+          TP_TEST_TOPIC_TRANSACTION: EC_TEST_CODE_TRANSACTION
+          TP_TEST_TOPIC: EC_TEST_CODE
