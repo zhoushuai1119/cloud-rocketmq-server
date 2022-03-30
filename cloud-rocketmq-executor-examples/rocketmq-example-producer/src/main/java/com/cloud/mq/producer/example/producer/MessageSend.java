@@ -2,6 +2,7 @@ package com.cloud.mq.producer.example.producer;
 
 import com.cloud.mq.base.core.CloudMQTemplate;
 import com.cloud.mq.producer.example.producer.transaction.TransactionExecutor;
+import com.cloud.platform.common.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +25,10 @@ public class MessageSend {
     private TransactionExecutor transactionExecutor;
 
 
-    public void sendMessage() {
+    public BaseResponse sendMessage() {
         final String message = "hello consumer i am producer!!!";
-        cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE", message);
+        BaseResponse result =  cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE", message);
+        return result;
     }
 
     public void sendTransactionMessage() {
