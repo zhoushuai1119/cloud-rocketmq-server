@@ -1,59 +1,68 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration debug="false" scan="true" scanPeriod="60 seconds">
-    <timestamp key="date" datePattern="yyyyMMdd" />
-    <property name="defaultPattern"
-              value="%blue(%d{MM-dd HH:mm:ss}) [%boldYellow(%thread)] | %highlight(%-5level) | %boldGreen(%logger) %X{clientIp} %X{operateId} - %highlight(%msg) %n"/>
-    <!-- 尽量别用绝对路径，如果带参数不同容器路径解释可能不同,以下配置参数在pom.xml里 -->
-    <property name="log.level.debug" value="DEBUG" /> <!-- DEBUG日志级别 -->
-    <property name="log.level.info" value="INFO" /> <!-- INFO日志级别 -->
-    <property name="log.other.level" value="WARN" /> <!-- 其他日志级别 -->
-    <property name="log.base" value="${user.home}/logs/cloud-rocketmq-executor-examples" /> <!-- 日志路径，这里是相对路径，web项目eclipse下会输出到eclipse的安装目录下，如果部署到linux上的tomcat下，会输出到tomcat/bin目录 下 -->
-    <property name="log.moduleName" value="rocketmq-example-producer" />  <!-- 模块名称， 影响日志配置名，日志文件名 -->
-    <property name="log.max.size" value="100MB" /> <!-- 日志文件大小,超过这个大小将被压缩 -->
+<!-- 属性描述
+scan：性设置为true时，配置文件如果发生改变，将会被重新加载，默认值为true
+scanPeriod:设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒。当scan为true时，此属性生效。默认的时间间隔为1分钟。
+debug:当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false。 -->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 模块名称， 影响日志配置名，日志文件名 -->
+    <property name="log.module.name" value="rocketmq-example-producer"/>
+    <!-- 定义日志文件存储根路径 -->
+    <property name="log.path" value="${user.home}/logs/rocketmq-executor-examples" />
+    <!-- 定义存储日志文件路径 -->
+    <property name="log.file" value="${log.path}/${log.module.name}/${log.module.name}.log"/>
+    <!-- 定义历史日志文件路径 -->
+    <property name="history.log.file" value="${log.path}/${log.module.name}/%d{yyyy-MM-dd}/${log.module.name}-%i.log.zip"/>
+    <!-- 定义错误日志文件路径 -->
+    <property name="error.log.file" value="${log.path}/${log.module.name}/error/${log.module.name}_error.log"/>
+    <!-- 定义错误历史日志文件路径 -->
+    <property name="history.error.log.file" value="${log.path}/${log.module.name}/%d{yyyy-MM-dd}/error/${log.module.name}_error-%i.log.zip"/>
+    <!-- 日志最大的历史 30天 -->
+    <property name="log.max.history" value="30"/>
+    <!-- 日志文件大小,超过这个大小将被压缩 -->
+    <property name="log.max.size" value="100MB"/>
+    <!-- 日志输出格式 -->
+    <property name="log.pattern"
+              value="%d{yyyy-MM-dd HH:mm:ss} | [%thread] | %-5level | %logger{50}.%method:%L - %msg %n"/>
 
     <!--控制台输出 -->
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>${defaultPattern}</Pattern>
+            <Pattern>${log.pattern}</Pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
     <!-- 用来保存输出所有级别的日志 -->
     <appender name="file.all" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${log.base}/${log.moduleName}/${log.moduleName}.log</File><!-- 设置日志不超过${log.max.size}时的保存路径，注意如果
-            是web项目会保存到Tomcat的bin目录 下 -->
+        <!-- 设置日志不超过${log.max.size}时的保存路径 -->
+        <File>${log.file}</File>
         <!-- 滚动记录文件，先将日志记录到指定文件，当符合某个条件时，将日志记录到其他文件。 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${log.base}/archive/${log.moduleName}/${log.moduleName}_all_%d{yyyy-MM-dd}.%i.log.zip</FileNamePattern>
+            <FileNamePattern>${history.log.file}</FileNamePattern>
             <!-- 文件输出日志 (文件大小策略进行文件输出，超过指定大小对文件备份) -->
-            <timeBasedFileNamingAndTriggeringPolicy
-                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>${log.max.size}</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
-            <!--只保留最近10天的日志-->
-            <maxHistory>10</maxHistory>
+            <!--只保留最近30天的日志-->
+            <maxHistory>${log.max.history}</maxHistory>
         </rollingPolicy>
         <!-- 日志输出的文件的格式 -->
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} %-5level[%thread]%logger{56}.%method:%L -%msg%n</pattern>
-        </layout>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${log.pattern}</Pattern>
+            <charset>UTF-8</charset>
+        </encoder>
     </appender>
 
     <!-- 只用保存输出error级别的日志 -->
-    <appender name="file.error"
-              class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>${log.base}/${log.moduleName}/${log.moduleName}_err.log</File>
+    <appender name="file.error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${error.log.file}</File>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>${log.base}/archive/${log.moduleName}/${log.moduleName}_err_%d{yyyy-MM-dd}.%i.log.zip
-            </FileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy
-                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+            <FileNamePattern>${history.error.log.file}</FileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>${log.max.size}</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
+            <!--只保留最近30天的日志-->
+            <maxHistory>${log.max.history}</maxHistory>
         </rollingPolicy>
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{56}.%method:%L - %msg%n</pattern>
-        </layout>
         <!-- 下面为配置只输出error级别的日志 -->
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <!--过滤 Error-->
@@ -63,28 +72,19 @@
             <!--没有匹配到就禁止-->
             <onMismatch>DENY</onMismatch>
         </filter>
+        <!-- 日志输出的文件的格式 -->
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${log.pattern}</Pattern>
+            <charset>UTF-8</charset>
+        </encoder>
     </appender>
 
-    <!-- 不丢失日志.默认的,如果队列的80%已满,则会丢弃TRACT、DEBUG、INFO级别的日志 -->
-    <!-- 更改默认的队列的深度,该值会影响性能.默认值为256 -->
-    <!-- 添加附加的appender,最多只能添加一个 -->
-    <appender name="file.async" class="ch.qos.logback.classic.AsyncAppender">
-        <discardingThreshold>0</discardingThreshold>
-        <queueSize>256</queueSize>
-        <includeCallerData>true</includeCallerData>
-        <appender-ref ref="file.all" />
-    </appender>
-
-    <logger name="com.cloud" additivity="false">
-        <level value="${log.level.info}" />
+    <!-- 根节点，表名基本的日志级别，里面可以由多个appender规则 -->
+    <!-- level="INFO"代表基础日志级别为INFO -->
+    <root level="INFO">
         <appender-ref ref="stdout" />
-        <appender-ref ref="file.async" />
-        <appender-ref ref="file.error" />
-    </logger>
-
-    <!-- root将级别为${log.root.level}及大于${log.root.level}的日志信息交给已经配置好的名为“Console”的appender处理，“Console”appender将信息打印到Console,其它同理 -->
-    <root level="${log.level.info}">
-        <appender-ref ref="stdout" /> <!--  标识这个appender将会添加到这个logger -->
+        <appender-ref ref="file.all" />
         <appender-ref ref="file.error" />
     </root>
+
 </configuration>
