@@ -2,9 +2,8 @@ package com.cloud.mq.producer.example.producer;
 
 import com.cloud.mq.base.core.CloudMQTemplate;
 import com.cloud.mq.producer.example.producer.transaction.TransactionExecutor;
-import com.cloud.platform.common.response.BaseResponse;
+import com.cloud.platform.common.domain.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

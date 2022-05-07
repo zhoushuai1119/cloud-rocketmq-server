@@ -1,7 +1,7 @@
 package com.cloud.mq.producer.controller;
 
 import com.cloud.mq.producer.example.producer.MessageSend;
-import com.cloud.platform.common.response.BaseResponse;
+import com.cloud.platform.common.domain.response.BaseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

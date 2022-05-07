@@ -7,7 +7,7 @@ import com.cloud.mq.base.dto.PushMessage;
 import com.cloud.mq.base.utils.BatchMsgUtil;
 import com.cloud.mq.base.utils.ValuesUtil;
 import com.cloud.mq.base.enums.DelayLevelEnum;
-import com.cloud.platform.common.response.BaseResponse;
+import com.cloud.platform.common.domain.response.BaseResponse;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;

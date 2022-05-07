@@ -2,7 +2,7 @@
 package com.cloud.mq.base.core;
 
 
-import com.cloud.platform.common.response.BaseResponse;
+import com.cloud.platform.common.domain.response.BaseResponse;
 
 /**
  * 消息发送模板接口

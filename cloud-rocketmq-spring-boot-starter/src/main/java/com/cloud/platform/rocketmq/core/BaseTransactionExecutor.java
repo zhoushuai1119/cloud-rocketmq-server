@@ -1,6 +1,6 @@
 package com.cloud.platform.rocketmq.core;
 
-import com.cloud.platform.common.response.BaseResponse;
+import com.cloud.platform.common.domain.response.BaseResponse;
 import com.cloud.platform.rocketmq.annotation.TansactionTopic;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

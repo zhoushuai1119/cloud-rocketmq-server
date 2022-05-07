@@ -5,7 +5,7 @@ package com.cloud.mq.base.core;
 import com.cloud.mq.base.dto.BatchMessage;
 import com.cloud.mq.base.dto.PushMessage;
 import com.cloud.mq.base.enums.DelayLevelEnum;
-import com.cloud.platform.common.response.BaseResponse;
+import com.cloud.platform.common.domain.response.BaseResponse;
 import org.apache.rocketmq.client.producer.SendCallback;
 
 /**
