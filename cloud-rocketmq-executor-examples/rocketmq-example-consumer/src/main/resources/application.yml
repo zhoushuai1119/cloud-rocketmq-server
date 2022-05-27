@@ -18,7 +18,7 @@ cloud:
         subscription:
           # topic : eventCode  最好都大写
           TP_TEST_TOPIC_TRANSACTION: EC_TEST_CODE_TRANSACTION
-          TP_TEST_TOPIC: EC_TEST_CODE
+          TP_TEST_TOPIC: EC_TEST_CODE,EC_TEST_CODE_V2
 
 
 logging:

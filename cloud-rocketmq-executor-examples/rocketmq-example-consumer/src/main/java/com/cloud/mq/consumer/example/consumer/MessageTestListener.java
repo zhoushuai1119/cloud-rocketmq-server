@@ -14,12 +14,12 @@ import lombok.extern.slf4j.Slf4j;
  * @version: v1
  */
 @Slf4j
-@ConsumeTopic(topic = "TP_TEST_TOPIC", eventCode = "EC_TEST_CODE", log = true)
-public class MessageListener implements TopicListener<String> {
+@ConsumeTopic(topic = "TP_TEST_TOPIC", eventCode = "EC_TEST_CODE_V2", log = true)
+public class MessageTestListener implements TopicListener<String> {
 
     @Override
     public void onMessage(CloudMessage<String> message) {
-        log.info("EC_TEST_CODE接收到消息:{}",message.getPayload());
+        log.info("EC_TEST_CODE_V2接收到消息:{}",message.getPayload());
     }
 
 }

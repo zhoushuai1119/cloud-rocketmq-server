@@ -25,9 +25,12 @@ public class MessageSend {
 
 
     public BaseResponse sendMessage() {
-        final String message = "hello consumer i am producer!!!";
-        BaseResponse result =  cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE", message);
-        return result;
+        for (int i = 0; i < 20; i++) {
+            final String message = "hello consumer i am producer!!!" + i;
+            cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE", message);
+            cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE_V2", message);
+        }
+        return BaseResponse.createSuccessResult(null);
     }
 
     public void sendTransactionMessage() {
