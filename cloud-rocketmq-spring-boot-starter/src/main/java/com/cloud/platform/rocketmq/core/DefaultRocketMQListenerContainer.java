@@ -299,17 +299,28 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
         Assert.notNull(nameServer, "Property 'nameServer' is required");
         Assert.notNull(subscription, "Property 'subscription' is required");
 
-        consumer = new DefaultMQPushConsumer(null, consumerGroup);
+        consumer = new DefaultMQPushConsumer(consumerGroup);
         consumer.setNamesrvAddr(nameServer);
         consumer.setConsumeThreadMax(consumeThreadMax);
         consumeThreadMin = Math.min(consumeThreadMin, consumeThreadMax);
         consumer.setConsumeThreadMin(consumeThreadMin);
-        consumer.setMessageModel(messageModel);
+        //consumer.setMessageModel(messageModel);
 
         //分配策略 改为环形分配（使得队列消费范围较为均匀）
         consumer.setAllocateMessageQueueStrategy(new AllocateMessageQueueAveragelyByCircle());
         //设置最大批量消费数量
         consumer.setConsumeMessageBatchMaxSize(consumeMessageBatchMaxSize);
+
+        switch (messageModel) {
+            case BROADCASTING:
+                consumer.setMessageModel(MessageModel.BROADCASTING);
+                break;
+            case CLUSTERING:
+                consumer.setMessageModel(MessageModel.CLUSTERING);
+                break;
+            default:
+                throw new IllegalArgumentException("Property 'messageModel' was wrong.");
+        }
 
         switch (selectorType) {
             case TAG:
@@ -337,6 +348,10 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
                 break;
             default:
                 throw new IllegalArgumentException("Property 'consumeMode' was wrong.");
+        }
+
+        if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {
+            ((RocketMQPushConsumerLifecycleListener) rocketMQListener).prepareStart(consumer);
         }
 
         if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {
