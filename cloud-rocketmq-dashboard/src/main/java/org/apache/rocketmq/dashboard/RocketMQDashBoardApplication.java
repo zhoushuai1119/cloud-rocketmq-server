@@ -27,10 +27,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @ServletComponentScan
 @EnableMBeanExport(registration = RegistrationPolicy.IGNORE_EXISTING)
-public class App {
+public class RocketMQDashBoardApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(App.class, args);
+        SpringApplication.run(RocketMQDashBoardApplication.class, args);
     }
 
 }

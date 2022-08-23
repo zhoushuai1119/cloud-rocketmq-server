@@ -17,42 +17,35 @@
 package org.apache.rocketmq.dashboard.task;
 
 import com.google.common.base.Stopwatch;
-import org.apache.rocketmq.common.protocol.body.ClusterInfo;
-import org.apache.rocketmq.common.protocol.body.GroupList;
-import org.apache.rocketmq.common.protocol.body.KVTable;
-import org.apache.rocketmq.common.protocol.body.TopicList;
-import org.apache.rocketmq.common.protocol.route.BrokerData;
-import org.apache.rocketmq.common.protocol.route.TopicRouteData;
-import org.apache.rocketmq.common.topic.TopicValidator;
-import org.apache.rocketmq.store.stats.BrokerStatsManager;
-import org.apache.rocketmq.tools.admin.MQAdminExt;
-import org.apache.rocketmq.tools.command.stats.StatsAllSubCommand;
 import com.google.common.base.Throwables;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import org.apache.rocketmq.common.MixAll;
+import org.apache.rocketmq.common.protocol.body.*;
+import org.apache.rocketmq.common.protocol.route.BrokerData;
+import org.apache.rocketmq.common.protocol.route.TopicRouteData;
+import org.apache.rocketmq.common.topic.TopicValidator;
+import org.apache.rocketmq.dashboard.config.RMQConfigure;
+import org.apache.rocketmq.dashboard.service.DashboardCollectService;
+import org.apache.rocketmq.dashboard.util.JsonUtil;
+import org.apache.rocketmq.store.stats.BrokerStatsManager;
+import org.apache.rocketmq.tools.admin.MQAdminExt;
+import org.apache.rocketmq.tools.command.stats.StatsAllSubCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Resource;
-import org.apache.rocketmq.common.MixAll;
-import org.apache.rocketmq.common.protocol.body.BrokerStatsData;
-import org.apache.rocketmq.dashboard.config.RMQConfigure;
-import org.apache.rocketmq.dashboard.service.DashboardCollectService;
-import org.apache.rocketmq.dashboard.util.JsonUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 @Component
 public class DashboardCollectTask {
@@ -112,8 +105,8 @@ public class DashboardCollectTask {
                         }
                         catch (Exception e) {
                             stopwatch.reset();
-                            log.warn("Exception caught: mqAdminExt get broker stats data TOPIC_PUT_NUMS failed");
-                            log.warn("Response [{}] ", e.getMessage());
+                            log.debug("Exception caught: mqAdminExt get broker stats data TOPIC_PUT_NUMS failed");
+                            log.debug("Response [{}] ", e.getMessage());
                         }
                     }
                 }
@@ -131,8 +124,8 @@ public class DashboardCollectTask {
                                     outMsgCntToday += StatsAllSubCommand.compute24HourSum(bsd);
                                 }
                                 catch (Exception e) {
-                                    log.warn("Exception caught: mqAdminExt get broker stats data GROUP_GET_NUMS failed");
-                                    log.warn("Response [{}] ", e.getMessage());
+                                    log.debug("Exception caught: mqAdminExt get broker stats data GROUP_GET_NUMS failed");
+                                    log.debug("Response [{}] ", e.getMessage());
                                 }
                             }
                         }
