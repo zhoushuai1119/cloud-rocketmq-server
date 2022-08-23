@@ -52,7 +52,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
 
     @Setter
     @Getter
-    private String enableMsgTrace;
+    private Boolean enableMsgTrace;
 
     @Setter
     @Getter
