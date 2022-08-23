@@ -7,6 +7,7 @@ public final class DefaultRocketMQListenerContainerConstants {
     public static final String PROP_NAMESERVER = "nameServer";
     public static final String PROP_TOPIC_MAP = "subscription";
     public static final String PROP_CONSUMER_GROUP = "consumerGroup";
+    public static final String PROP_ENABLE_MSG_TRACE = "enableMsgTrace";
     public static final String PROP_CONSUME_MODE = "consumeMode";
     public static final String PROP_CONSUME_THREAD_MAX = "consumeThreadMax";
     public static final String PROP_CONSUME_THREAD_MIN = "consumeThreadMin";

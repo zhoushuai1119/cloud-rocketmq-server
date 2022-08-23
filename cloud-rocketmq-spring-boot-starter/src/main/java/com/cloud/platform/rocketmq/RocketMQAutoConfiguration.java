@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * RocketMQ自动配置
  */
 @Configuration
-@EnableConfigurationProperties({RocketMQProperties.class,TimeBasedJobProperties.class})
+@EnableConfigurationProperties({RocketMQProperties.class, TimeBasedJobProperties.class})
 @ConditionalOnClass(MQClientAPIImpl.class)
 @Order
 @Slf4j
@@ -70,7 +70,7 @@ public class RocketMQAutoConfiguration {
         String groupName = producerConfig.getGroup();
         Assert.hasText(groupName, "[cloud.rocketmq.producer.group] must not be null");
 
-        DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroup());
+        DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroup(), producerConfig.isEnableMsgTrace());
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
         producer.setSendMsgTimeout(producerConfig.getSendMsgTimeout());
         producer.setRetryTimesWhenSendFailed(producerConfig.getRetryTimesWhenSendFailed());
@@ -92,9 +92,11 @@ public class RocketMQAutoConfiguration {
     @Bean
     @ConditionalOnClass(value = {TransactionMQProducer.class})
     @ConditionalOnMissingBean(value = {TransactionMQProducer.class})
-    public TransactionMQProducer mqTransactionProducer(RocketMQProperties rocketMQProperties) throws Exception {
-        RocketMQProperties.TransactionProducerCustom tranProCustomModel = rocketMQProperties.getTransactionProducerCustom();//事务消息model
-        RocketMQProperties.Producer producerConfigModel = rocketMQProperties.getProducer();//普通消息model
+    public TransactionMQProducer mqTransactionProducer(RocketMQProperties rocketMQProperties) {
+        //事务消息model
+        RocketMQProperties.TransactionProducerCustom tranProCustomModel = rocketMQProperties.getTransactionProducerCustom();
+        //普通消息model
+        RocketMQProperties.Producer producerConfigModel = rocketMQProperties.getProducer();
         //生成事务消息生产groupName
         if (Objects.isNull(tranProCustomModel)) {
             //如果事务消息没有配置属性，则使用普通消息的属性组装生成model
@@ -116,7 +118,9 @@ public class RocketMQAutoConfiguration {
 
         // 设置属性--回查事务线程池
         RocketMQProperties.TransactionExecutorConf tEConf = tranProCustomModel.getCheckThreadPool();
-        if (Objects.isNull(tEConf)) tEConf = new RocketMQProperties.TransactionExecutorConf();
+        if (Objects.isNull(tEConf)) {
+            tEConf = new RocketMQProperties.TransactionExecutorConf();
+        }
 
         ExecutorService executorService = new ThreadPoolExecutor(
                 tEConf.getCorePoolSize(), tEConf.getMaximumPoolSize(), tEConf.getKeepAliveTime(),
@@ -375,6 +379,7 @@ public class RocketMQAutoConfiguration {
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_TOPIC_MAP, topicTagsMap);
 
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_CONSUMER_GROUP, beanName);
+            beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_ENABLE_MSG_TRACE, consumerProperties.isEnableMsgTrace());
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_CONSUME_MODE, consumeMode);
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_CONSUME_THREAD_MAX, consumerProperties.getConsumeThreadMax());
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_CONSUME_THREAD_MIN, consumerProperties.getConsumeThreadMin());

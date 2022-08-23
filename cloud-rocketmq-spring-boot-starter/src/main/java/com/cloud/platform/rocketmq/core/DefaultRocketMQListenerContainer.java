@@ -52,6 +52,10 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
 
     @Setter
     @Getter
+    private String enableMsgTrace;
+
+    @Setter
+    @Getter
     private String nameServer;
     /**
      * key: topic, value: tags
@@ -282,7 +286,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
     }
 
 
-    private PushMessage packageFeedbackPushMessage(TimeBasedJobMessage message, TimeBasedJobFeedback feedback){
+    private PushMessage packageFeedbackPushMessage(TimeBasedJobMessage message, TimeBasedJobFeedback feedback) {
         PushMessage pushMessage = new PushMessage();
         pushMessage.setTopic(TimeBasedJobProperties.JOB_TOPIC_FEEDBACK);
         pushMessage.setEventCode(TimeBasedJobProperties.JOB_EVENTCODE_FEEDBACK);
@@ -299,7 +303,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
         Assert.notNull(nameServer, "Property 'nameServer' is required");
         Assert.notNull(subscription, "Property 'subscription' is required");
 
-        consumer = new DefaultMQPushConsumer(consumerGroup);
+        consumer = new DefaultMQPushConsumer(consumerGroup, enableMsgTrace);
         consumer.setNamesrvAddr(nameServer);
         consumer.setConsumeThreadMax(consumeThreadMax);
         consumeThreadMin = Math.min(consumeThreadMin, consumeThreadMax);

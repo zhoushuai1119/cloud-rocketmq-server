@@ -78,6 +78,11 @@ public class RocketMQProperties {
         private boolean retryAnotherBrokerWhenNotStoreOk = true;
 
         /**
+         * 是否开启消息轨迹
+         */
+        private boolean enableMsgTrace = false;
+
+        /**
          * 消息体最大2M.
          */
         private int maxMessageSize = 1024 * 1024 * 2; // 2M
@@ -139,6 +144,12 @@ public class RocketMQProperties {
          * Batch consumption size
          */
         private int consumeMessageBatchMaxSize = 1;
+
+        /**
+         * 是否开启消息轨迹
+         */
+        private boolean enableMsgTrace = false;
+
     }
 
 
