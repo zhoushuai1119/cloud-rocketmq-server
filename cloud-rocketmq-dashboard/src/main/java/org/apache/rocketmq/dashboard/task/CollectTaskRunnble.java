@@ -18,10 +18,6 @@ package org.apache.rocketmq.dashboard.task;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.protocol.body.BrokerStatsData;
@@ -32,6 +28,11 @@ import org.apache.rocketmq.dashboard.service.DashboardCollectService;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
 import org.apache.rocketmq.tools.admin.MQAdminExt;
 import org.apache.rocketmq.tools.command.stats.StatsAllSubCommand;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public class CollectTaskRunnble implements Runnable {
@@ -67,7 +68,7 @@ public class CollectTaskRunnble implements Runnable {
                         inTPS += bsd.getStatsMinute().getTps();
                         inMsgCntToday += StatsAllSubCommand.compute24HourSum(bsd);
                     } catch (Exception e) {
-                        log.warn("Exception caught: mqAdminExt get broker stats data TOPIC_PUT_NUMS failed, topic [{}]", topic, e.getMessage());
+                        log.debug("Exception caught: mqAdminExt get broker stats data TOPIC_PUT_NUMS failed, topic [{}]", topic, e.getMessage());
                     }
                 }
             }
@@ -82,7 +83,7 @@ public class CollectTaskRunnble implements Runnable {
                                 outTPS += bsd.getStatsMinute().getTps();
                                 outMsgCntToday += StatsAllSubCommand.compute24HourSum(bsd);
                             } catch (Exception e) {
-                                log.warn("Exception caught: mqAdminExt get broker stats data GROUP_GET_NUMS failed, topic [{}], group [{}]", topic, group, e.getMessage());
+                                log.debug("Exception caught: mqAdminExt get broker stats data GROUP_GET_NUMS failed, topic [{}], group [{}]", topic, group, e.getMessage());
                             }
                         }
                     }
