@@ -107,7 +107,8 @@ public class RocketMQAutoConfiguration {
         Assert.hasText(groupName, "[cloud.rocketmq.producer.group] must not be null");
 
         //设置属性--事务消息生产
-        TransactionMQProducer producer = new TransactionMQProducer(groupName);
+        //TransactionMQProducer producer = new TransactionMQProducer(groupName);
+        TransactionMQProducer producer = new TransactionMQProducer(null, groupName, null, tranProCustomModel.isEnableMsgTrace(), null);
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
         producer.setSendMsgTimeout(tranProCustomModel.getSendMsgTimeout());
         producer.setRetryTimesWhenSendFailed(tranProCustomModel.getRetryTimesWhenSendFailed());
