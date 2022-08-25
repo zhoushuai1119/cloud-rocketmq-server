@@ -21,6 +21,7 @@ import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAverage
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
@@ -31,8 +32,11 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * @author shuai.zhou
+ */
 @Slf4j
-public class DefaultRocketMQListenerContainer implements InitializingBean, RocketMQListenerContainer {
+public class DefaultRocketMQListenerContainer implements InitializingBean, DisposableBean {
 
     @Setter
     @Getter
@@ -114,11 +118,6 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
     @Setter
     @Getter
     private int consumeMessageBatchMaxSize;
-
-
-    public void setupMessageListener(CloudMQListener rocketMQListener) {
-        this.rocketMQListener = rocketMQListener;
-    }
 
     @Override
     public void destroy() {

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 默认的listener.
@@ -34,11 +35,11 @@ public class DefaultMessageListener implements CloudMQListener<String> {
     public void onMessage(CloudMessage<String> message) throws Exception {
         //查询是否有 *,避免多个eventCode配置干扰
         ConsumeTopicInfo consume = topicConsumerMap.get(message.getTopic() + ":*");
-        if (null == consume) {
+        if (Objects.isNull(consume)) {
             String key = message.getTopic() + ":" + message.getEventCode();
             consume = topicConsumerMap.get(key);
         }
-        if (consume != null) {
+        if (Objects.nonNull(consume)) {
             if (consume.isLog()) {
                 log.info("receive mq topic:{}, eventCode:{}, payload:{}", message.getTopic(), message.getEventCode(), message.getPayload());
             }

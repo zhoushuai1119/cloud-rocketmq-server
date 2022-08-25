@@ -23,7 +23,9 @@ public class MessageSend {
     @Autowired
     private TransactionExecutor transactionExecutor;
 
-
+    /**
+     * 发送普通消息
+     */
     public BaseResponse sendMessage() {
         for (int i = 0; i < 20; i++) {
             final String message = "hello consumer i am producer!!!" + i;
@@ -33,6 +35,9 @@ public class MessageSend {
         return BaseResponse.createSuccessResult(null);
     }
 
+    /**
+     * 发送事务消息
+     */
     public void sendTransactionMessage() {
         final String transactionMessage = "hello consumer i am transaction message!!!";
         transactionExecutor.send(transactionMessage, "messageId");

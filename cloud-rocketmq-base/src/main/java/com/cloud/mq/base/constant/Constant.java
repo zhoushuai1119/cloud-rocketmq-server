@@ -25,4 +25,16 @@ public class Constant {
         String LOG = "log";
     }
 
+    public interface SelectorType {
+        /**
+         * SQL92
+         */
+        String SQL92 = "SQL92";
+
+        /**
+         * TAG
+         */
+        String TAG = "TAG";
+    }
+
 }

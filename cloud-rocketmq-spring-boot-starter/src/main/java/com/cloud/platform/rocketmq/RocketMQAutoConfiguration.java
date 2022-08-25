@@ -1,6 +1,7 @@
 package com.cloud.platform.rocketmq;
 
 import com.beust.jcommander.internal.Lists;
+import com.cloud.mq.base.constant.Constant;
 import com.cloud.mq.base.core.CloudMQListener;
 import com.cloud.platform.rocketmq.annotation.ConsumeTopic;
 import com.cloud.platform.rocketmq.core.*;
@@ -245,7 +246,7 @@ public class RocketMQAutoConfiguration {
                         for (Map.Entry<String, List<String>> entry : topicAndEventCodes.entrySet()) {
                             List<String> eventCodes = entry.getValue();
                             if (eventCodes.size() > 1 && eventCodes.contains("*")) {
-                                throw new Exception("fail in listener code ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodes.toString());
+                                throw new Exception("fail in listener code ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodes);
                             }
                         }
 
@@ -324,12 +325,12 @@ public class RocketMQAutoConfiguration {
             } else {
                 DefaultMessageListener.ConsumeTopicInfo topicInfo = null;
                 Map<String, Object> attrs = AnnotationUtils.getAnnotationAttributes(annotation);
-                if (MapUtils.isNotEmpty(attrs) && attrs.containsKey("topic") && attrs.containsKey("eventCode")) {
+                if (MapUtils.isNotEmpty(attrs) && attrs.containsKey(Constant.TopicInfo.TOPIC) && attrs.containsKey(Constant.TopicInfo.EVENT_CODE)) {
                     topicInfo = new DefaultMessageListener.ConsumeTopicInfo();
-                    topicInfo.setTopic(attrs.get("topic").toString());
-                    topicInfo.setEventCode(attrs.get("eventCode").toString());
-                    if (attrs.containsKey("log")) {
-                        topicInfo.setLog(Boolean.valueOf(attrs.get("log").toString()));
+                    topicInfo.setTopic(attrs.get(Constant.TopicInfo.TOPIC).toString());
+                    topicInfo.setEventCode(attrs.get(Constant.TopicInfo.EVENT_CODE).toString());
+                    if (attrs.containsKey(Constant.TopicInfo.LOG)) {
+                        topicInfo.setLog(Boolean.valueOf(attrs.get(Constant.TopicInfo.LOG).toString()));
                     }
                 }
                 return topicInfo;
@@ -415,10 +416,10 @@ public class RocketMQAutoConfiguration {
         }
 
         private SelectorType getSelectorType(RocketMQProperties.Consumer consumerProperties) {
-            if ("SQL92".equals(consumerProperties.getSelectorType())) {
+            if (Constant.SelectorType.SQL92.equals(consumerProperties.getSelectorType())) {
                 return SelectorType.SQL92;
             }
-            if ("TAG".equals(consumerProperties.getSelectorType())) {
+            if (Constant.SelectorType.TAG.equals(consumerProperties.getSelectorType())) {
                 return SelectorType.TAG;
             }
             log.warn("select miss！miss value is {} ,use default SelectorType TAG，", consumerProperties.getSelectorType());
