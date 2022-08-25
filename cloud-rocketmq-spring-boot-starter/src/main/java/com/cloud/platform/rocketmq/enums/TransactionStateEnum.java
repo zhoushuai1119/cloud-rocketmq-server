@@ -5,10 +5,10 @@ import lombok.Getter;
 import java.util.HashMap;
 
 /**
- * @Author 马腾飞
- * @Date 2019/8/29
- * @Time 12:28
- * @Description
+ * @author shuai.zhou
+ * @date 2019/8/29
+ * @time 12:28
+ * @description
  */
 @Getter
 public enum TransactionStateEnum {

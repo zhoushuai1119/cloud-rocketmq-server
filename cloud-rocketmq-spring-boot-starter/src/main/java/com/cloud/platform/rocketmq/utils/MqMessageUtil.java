@@ -20,10 +20,10 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 
 /**
- * @Author 马腾飞
- * @Date 2019/11/15
- * @Time 16:52
- * @Description
+ * @author shuai.zhou
+ * @date 2019/11/15
+ * @time 16:52
+ * @description
  */
 @Slf4j
 public class MqMessageUtil {

@@ -7,9 +7,9 @@ import lombok.NoArgsConstructor;
 /**
  * 定时任务消息
  *
- * @Author Wang Lin(王霖)
- * @Date 2018/2/26
- * @Time 上午10:38
+ * @author shuai.zhou
+ * @date 2018/2/26
+ * @time 上午10:38
  */
 @Data
 @AllArgsConstructor

@@ -7,6 +7,8 @@ import java.lang.annotation.*;
 /**
  * 事务消息 topic eventcode
  *
+ * @author shuai.zhou
+ *
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
@@ -16,15 +18,11 @@ public @interface TansactionTopic {
 
     /**
      * topic
-     *
-     * @return
      */
     String topic();
 
     /**
      * eventCode
-     *
-     * @return
      */
     String eventCode();
 

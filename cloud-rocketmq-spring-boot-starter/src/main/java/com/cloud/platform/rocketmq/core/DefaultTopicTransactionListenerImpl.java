@@ -1,6 +1,7 @@
 package com.cloud.platform.rocketmq.core;
 
 
+import com.cloud.mq.base.constant.Constant;
 import com.cloud.mq.base.dto.CloudMessage;
 import com.cloud.platform.rocketmq.annotation.TansactionTopic;
 import com.cloud.platform.rocketmq.utils.MqMessageUtil;
@@ -24,6 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 现类用于接收 mq原始 封装
+ *
+ * @author shuai.zhou
  */
 @Slf4j
 public class DefaultTopicTransactionListenerImpl implements TransactionListener {
@@ -88,7 +91,7 @@ public class DefaultTopicTransactionListenerImpl implements TransactionListener 
     /**
      * 注册监听到map内
      *
-     * @Author 马腾飞
+     * @author shuai.zhou
      * @Date 2019/12/11 15:58
      */
     protected static void registerListener(TopicTransactionListener topicListener) throws Exception {
@@ -129,10 +132,10 @@ public class DefaultTopicTransactionListenerImpl implements TransactionListener 
         } else {
             TransactionTopicMsgInfo topicInfo = null;
             Map<String, Object> attrs = AnnotationUtils.getAnnotationAttributes(annotation);
-            if (attrs != null && attrs.containsKey("topic") && attrs.containsKey("eventCode")) {
+            if (attrs != null && attrs.containsKey(Constant.TopicInfo.TOPIC) && attrs.containsKey(Constant.TopicInfo.EVENT_CODE)) {
                 topicInfo = new TransactionTopicMsgInfo();
-                topicInfo.setTopic(attrs.get("topic").toString());
-                topicInfo.setEventCode(attrs.get("eventCode").toString());
+                topicInfo.setTopic(attrs.get(Constant.TopicInfo.TOPIC).toString());
+                topicInfo.setEventCode(attrs.get(Constant.TopicInfo.EVENT_CODE).toString());
             }
             return topicInfo;
         }

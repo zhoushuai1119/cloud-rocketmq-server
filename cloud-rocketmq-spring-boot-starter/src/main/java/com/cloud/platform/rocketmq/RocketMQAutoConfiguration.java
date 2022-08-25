@@ -203,7 +203,7 @@ public class RocketMQAutoConfiguration {
                 //获取带有 @Component 的实现listener
                 Map<String, CloudMQListener> beans = this.applicationContext.getBeansOfType(CloudMQListener.class);
 
-                //如果MonsterMQListener是空的，注册空的MonsterMQListener，找TopicListener bean，分topic消费消息
+                //如果CloudMQListener是空的，注册空的CloudMQListener，找TopicListener bean，分topic消费消息
                 if (MapUtils.isEmpty(beans)) {
                     Map<String/*beanName*/, TopicListener> beanMap = this.applicationContext.getBeansOfType(TopicListener.class);
                     if (MapUtils.isEmpty(beanMap)) {
