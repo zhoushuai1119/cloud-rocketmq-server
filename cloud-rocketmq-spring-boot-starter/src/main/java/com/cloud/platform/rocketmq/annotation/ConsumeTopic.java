@@ -28,7 +28,7 @@ public @interface ConsumeTopic {
      *
      * @return
      */
-    String eventCode();
+    String eventCode() default "*";
 
     /**
      * 是否打印日志
