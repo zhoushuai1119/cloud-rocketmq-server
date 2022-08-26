@@ -23,6 +23,12 @@ public class Constant {
          * log
          */
         String LOG = "log";
+
+        /**
+         * ALL
+         */
+        String ALL = "*";
+
     }
 
     public interface SelectorType {

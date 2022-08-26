@@ -43,6 +43,7 @@ import javax.annotation.Resource;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -306,23 +307,23 @@ public class RocketMQAutoConfiguration {
             SelectorType selectorType = getSelectorType(consumerProperties);
             //普通topic key: topic, value: tags 格式{ec_0||ec_1}
             Map<String, String> topicTagsMap = new HashMap<>();
-            //包含定时任务
-            boolean isContainsTimedTask = false;
-            for (Map.Entry<String, List<String>> topicEventCodes : topicAndEventCodes.entrySet()) {
-                String eventCodeListStr = Joiner.on(PlatformCommonConstant.SymbolParam.OR_SYMBOL).skipNulls().join(topicEventCodes.getValue());
-                if ("*".equals(eventCodeListStr.trim())) {
+            //是否包含定时任务
+            AtomicBoolean isContainsTimedTask = new AtomicBoolean(false);
+            topicAndEventCodes.forEach((topic, eventCodeList) -> {
+                String eventCodeListStr = Joiner.on(PlatformCommonConstant.SymbolParam.OR_SYMBOL).skipNulls().join(eventCodeList);
+                if (Constant.TopicInfo.ALL.equals(eventCodeListStr.trim())) {
                     //支持在同一topic下，不同event_code支持通配符（如*）的方式
-                    topicTagsMap.put(topicEventCodes.getKey(), "*");
+                    topicTagsMap.put(topic, Constant.TopicInfo.ALL);
                 } else {
-                    topicTagsMap.put(topicEventCodes.getKey(), eventCodeListStr);
+                    topicTagsMap.put(topic, eventCodeListStr);
                 }
-                if (TimeBasedJobProperties.JOB_TOPIC.equals(topicEventCodes.getKey())) {
-                    isContainsTimedTask = true;
+                if (TimeBasedJobProperties.JOB_TOPIC.equals(topic)) {
+                    isContainsTimedTask.set(true);
                 }
-            }
+            });
 
             ExecutorService timedJobExecutor = null;
-            if (isContainsTimedTask) {
+            if (isContainsTimedTask.get()) {
                 Assert.isTrue(timeBasedJobProperties != null && timeBasedJobProperties.isEnabled(), "[cloud.time-based-job.enabled] must be true");
                 Assert.notNull(rocketMQProperties.getProducer(), "[cloud.rocketmq.producer] must not be null");
                 Assert.hasText(rocketMQProperties.getProducer().getGroupName(), "[cloud.rocketmq.producer.groupName] must not be null");

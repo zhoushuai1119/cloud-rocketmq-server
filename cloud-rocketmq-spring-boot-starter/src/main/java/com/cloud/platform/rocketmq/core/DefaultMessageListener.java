@@ -6,6 +6,7 @@ import com.cloud.platform.rocketmq.utils.MqMessageUtil;
 import com.fasterxml.jackson.databind.JavaType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.MapUtils;
 
 import java.util.Map;
 import java.util.Objects;
@@ -19,15 +20,15 @@ public class DefaultMessageListener implements CloudMQListener<String> {
      * key 为 topicAndEventCode
      * ConsumeTopicInfo 有对应的消费逻辑 listener
      */
-    private Map<String, ConsumeTopicInfo> topicConsumerMap;
+    private Map<String/*topic:eventCode*/, ConsumeTopicInfo> topicConsumerMap;
 
     public DefaultMessageListener(Map<String, ConsumeTopicInfo> topicConsumerMap) {
-        this.topicConsumerMap = topicConsumerMap;
-        if (topicConsumerMap != null) {
-            for (ConsumeTopicInfo topicInfo : topicConsumerMap.values()) {
+        if (MapUtils.isNotEmpty(topicConsumerMap)) {
+            this.topicConsumerMap = topicConsumerMap;
+            topicConsumerMap.forEach((topicAndEventCode, consumeTopicInfo) -> {
                 //设置消息转化类型
-                topicInfo.setMessageType(MqMessageUtil.getMessageJavaType2Topic(topicInfo.getTopicListener()));
-            }
+                consumeTopicInfo.setMessageType(MqMessageUtil.getMessageJavaType2Topic(consumeTopicInfo.getTopicListener()));
+            });
         }
     }
 
