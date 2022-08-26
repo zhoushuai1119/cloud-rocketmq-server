@@ -3,15 +3,15 @@ package com.cloud.platform.rocketmq;
 import com.beust.jcommander.internal.Lists;
 import com.cloud.mq.base.constant.Constant;
 import com.cloud.mq.base.core.CloudMQListener;
+import com.cloud.platform.common.constants.PlatformCommonConstant;
 import com.cloud.platform.rocketmq.annotation.ConsumeTopic;
 import com.cloud.platform.rocketmq.core.*;
 import com.cloud.platform.rocketmq.enums.ConsumeMode;
 import com.cloud.platform.rocketmq.enums.SelectorType;
-import com.google.common.base.Splitter;
+import com.google.common.base.Joiner;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
@@ -23,7 +23,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -64,14 +63,14 @@ public class RocketMQAutoConfiguration {
     @Bean
     @ConditionalOnClass(DefaultMQProducer.class)
     @ConditionalOnMissingBean(DefaultMQProducer.class)
-    @ConditionalOnProperty(prefix = "cloud.rocketmq", value = {"name-server", "producer.group"})
+    @ConditionalOnProperty(prefix = "cloud.rocketmq", value = {"name-server", "producer.group-name"})
     public DefaultMQProducer mqProducer(RocketMQProperties rocketMQProperties) {
 
         RocketMQProperties.Producer producerConfig = rocketMQProperties.getProducer();
-        String groupName = producerConfig.getGroup();
-        Assert.hasText(groupName, "[cloud.rocketmq.producer.group] must not be null");
+        String groupName = producerConfig.getGroupName();
+        Assert.hasText(groupName, "[cloud.rocketmq.producer.groupName] must not be null");
 
-        DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroup(), producerConfig.isEnableMsgTrace());
+        DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroupName(), producerConfig.isEnableMsgTrace());
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
         producer.setSendMsgTimeout(producerConfig.getSendMsgTimeout());
         producer.setRetryTimesWhenSendFailed(producerConfig.getRetryTimesWhenSendFailed());
@@ -104,8 +103,8 @@ public class RocketMQAutoConfiguration {
             tranProCustomModel = new RocketMQProperties.TransactionProducerCustom();
             BeanUtils.copyProperties(producerConfigModel, tranProCustomModel);
         }
-        String groupName = tranProCustomModel.getGroup() + "-transaction";
-        Assert.hasText(groupName, "[cloud.rocketmq.producer.group] must not be null");
+        String groupName = tranProCustomModel.getGroupName() + "-transaction";
+        Assert.hasText(groupName, "[cloud.rocketmq.producer.groupName] must not be null");
 
         //设置属性--事务消息生产
         //TransactionMQProducer producer = new TransactionMQProducer(groupName);
@@ -183,9 +182,6 @@ public class RocketMQAutoConfiguration {
         @Autowired(required = false)
         private RocketMQTemplate rocketMQTemplate;
 
-        @Value("${eureka.instance.instanceId:unknown}")
-        private String instanceId;
-
         @Autowired(required = false)
         private TimeBasedJobProperties timeBasedJobProperties;
 
@@ -200,9 +196,11 @@ public class RocketMQAutoConfiguration {
 
         @Override
         public void afterPropertiesSet() throws Exception {
-            if (MapUtils.isNotEmpty(rocketMQProperties.getConsumer())) {
+            if (Objects.nonNull(rocketMQProperties.getConsumer())) {
+                String consumerGroupName = rocketMQProperties.getConsumer().getGroupName();
                 //获取带有 @Component 的实现listener
-                Map<String, CloudMQListener> beans = this.applicationContext.getBeansOfType(CloudMQListener.class);
+                Map<String/*consumerGroupName*/, CloudMQListener> beans = this.applicationContext.getBeansOfType(CloudMQListener.class);
+                Map<String/*topic*/, List<String>> topicAndEventCodes = new HashMap<>();
 
                 //如果CloudMQListener是空的，注册空的CloudMQListener，找TopicListener bean，分topic消费消息
                 if (MapUtils.isEmpty(beans)) {
@@ -213,7 +211,6 @@ public class RocketMQAutoConfiguration {
 
                     //设置 topicAndEventCode  和 listener 关系
                     Map<String/*topic:eventCode*/, DefaultMessageListener.ConsumeTopicInfo> topicMap = new HashMap<>();
-                    Map<String, List<String>> topicAndEventCodes = new HashMap<>();
                     Iterator<TopicListener> topicListenerIterator = beanMap.values().iterator();
                     while (topicListenerIterator.hasNext()) {
                         TopicListener topicListener = topicListenerIterator.next();
@@ -240,65 +237,25 @@ public class RocketMQAutoConfiguration {
                         }
                     }
 
-                    //校验topic eventCode 是否正确配置
-                    if (rocketMQProperties.getTopicRelationCheck()) {
-                        //代码文件里的topic eventCode
-                        for (Map.Entry<String, List<String>> entry : topicAndEventCodes.entrySet()) {
-                            List<String> eventCodes = entry.getValue();
-                            if (eventCodes.size() > 1 && eventCodes.contains("*")) {
-                                throw new Exception("fail in listener code ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodes);
-                            }
-                        }
-
-                        //配置文件里的topic eventCode
-                        Set<String> topicEventCodesInConfigs = new HashSet<>();
-                        for (RocketMQProperties.Consumer consumer : rocketMQProperties.getConsumer().values()) {
-                            Map<String, String> subscription = consumer.getSubscription();
-                            if (MapUtils.isNotEmpty(subscription)) {
-                                for (Map.Entry<String, String> topicEntry : subscription.entrySet()) {
-                                    if (StringUtils.isNotBlank(topicEntry.getValue())) {
-                                        String topic = topicEntry.getKey();
-                                        List<String> eventCodeList = Splitter.on(",").trimResults().omitEmptyStrings().splitToList(topicEntry.getValue());
-                                        if (CollectionUtils.isNotEmpty(eventCodeList)) {
-                                            if (eventCodeList.size() > 1 && eventCodeList.contains("*")) {
-                                                throw new Exception("fail in config ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodeList);
-                                            }
-                                            eventCodeList.forEach(eventCode -> {
-                                                topicEventCodesInConfigs.add(topic + ":" + eventCode);
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        for (String topicEventCodesInConfig : topicEventCodesInConfigs) {
-                            //校验配置文件里的topic是否都有listener
-                            if (!topicMap.containsKey(topicEventCodesInConfig)) {
-                                throw new Exception("fail to find topic listener for " + topicEventCodesInConfig);
-                            }
-                        }
-                        for (String topicEventCodesInCode : topicMap.keySet()) {
-                            //校验代码里的topic是否在配置文件里
-                            if (!topicEventCodesInConfigs.contains(topicEventCodesInCode)) {
-                                throw new Exception("fail to find topic eventCode config for " + topicEventCodesInCode);
-                            }
+                    //检查是否配置了*重复的监听器
+                    for (Map.Entry<String, List<String>> entry : topicAndEventCodes.entrySet()) {
+                        List<String> eventCodes = entry.getValue();
+                        if (eventCodes.size() > 1 && eventCodes.contains("*")) {
+                            throw new Exception("fail in listener code ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodes);
                         }
                     }
 
                     //为消费者,设置对应的监听Listener （包括topic 和 evencode关系）
-                    for (Map.Entry<String, RocketMQProperties.Consumer> consumer : rocketMQProperties.getConsumer().entrySet()) {
-                        DefaultMessageListener messageListener = new DefaultMessageListener(topicMap);
-                        ///注册单例bean
-                        applicationContext.getBeanFactory().registerSingleton(consumer.getKey(), messageListener);
-                    }
+                    DefaultMessageListener messageListener = new DefaultMessageListener(topicMap);
+                    ///注册单例bean
+                    applicationContext.getBeanFactory().registerSingleton(consumerGroupName, messageListener);
                     //执行完成后，bean 就有MonsterMQListener 对象了（DefaultMessageListener --extends --> 就有MonsterMQListener）
                     beans = this.applicationContext.getBeansOfType(CloudMQListener.class);
                 }
 
                 if (MapUtils.isNotEmpty(beans)) {
                     //根据上下文得到 beanName rocketMQListener 等信息  实例化启动，消费者
-                    beans.forEach((beanName, rocketMQListener) -> registerContainer(beanName, rocketMQListener, rocketMQTemplate, instanceId));
+                    beans.forEach((beanName, rocketMQListener) -> registerContainer(beanName, rocketMQListener, rocketMQTemplate, topicAndEventCodes));
                 } else {
                     throw new Exception("fail to find rocketMQ message listener");
                 }
@@ -338,11 +295,11 @@ public class RocketMQAutoConfiguration {
             return null;
         }
 
-        private void registerContainer(String beanName, CloudMQListener rocketMQListener, RocketMQTemplate rocketMQTemplate, String instanceId) {
+        private void registerContainer(String beanName, CloudMQListener rocketMQListener, RocketMQTemplate rocketMQTemplate, Map<String, List<String>> topicAndEventCodes) {
 
             Assert.notNull(rocketMQProperties.getConsumer(), "[cloud.rocketmq.consumer] must not be null");
-            RocketMQProperties.Consumer consumerProperties = rocketMQProperties.getConsumer().get(beanName);
-            Assert.notNull(consumerProperties, "[cloud.rocketmq.consumer." + beanName + "] must not be null");
+            RocketMQProperties.Consumer consumerProperties = rocketMQProperties.getConsumer();
+            Assert.notNull(consumerProperties.getGroupName(), "[cloud.rocketmq.consumer.groupName] must not be null");
             ConsumeMode consumeMode = consumerProperties.isOrderly() ? ConsumeMode.ORDERLY : ConsumeMode.CONCURRENTLY;
             int customConsumeMessageBatchMaxSize = Math.max(1, consumerProperties.getConsumeMessageBatchMaxSize());
             MessageModel messageModel = consumerProperties.isBroadcasting() ? MessageModel.BROADCASTING : MessageModel.CLUSTERING;
@@ -351,14 +308,13 @@ public class RocketMQAutoConfiguration {
             Map<String, String> topicTagsMap = new HashMap<>();
             //包含定时任务
             boolean isContainsTimedTask = false;
-            for (Map.Entry<String, String> topicEventCodes : consumerProperties.getSubscription().entrySet()) {
-                Assert.hasText(topicEventCodes.getValue(), "[cloud.rocketmq.consumer." + beanName + "." + topicEventCodes.getKey() + "] must not be null");
-                if ("*".equals(topicEventCodes.getValue().trim())) {
+            for (Map.Entry<String, List<String>> topicEventCodes : topicAndEventCodes.entrySet()) {
+                String eventCodeListStr = Joiner.on(PlatformCommonConstant.SymbolParam.OR_SYMBOL).skipNulls().join(topicEventCodes.getValue());
+                if ("*".equals(eventCodeListStr.trim())) {
                     //支持在同一topic下，不同event_code支持通配符（如*）的方式
                     topicTagsMap.put(topicEventCodes.getKey(), "*");
                 } else {
-                    String tags = topicEventCodes.getValue().replace(",", "||");
-                    topicTagsMap.put(topicEventCodes.getKey(), tags);
+                    topicTagsMap.put(topicEventCodes.getKey(), eventCodeListStr);
                 }
                 if (TimeBasedJobProperties.JOB_TOPIC.equals(topicEventCodes.getKey())) {
                     isContainsTimedTask = true;
@@ -369,7 +325,7 @@ public class RocketMQAutoConfiguration {
             if (isContainsTimedTask) {
                 Assert.isTrue(timeBasedJobProperties != null && timeBasedJobProperties.isEnabled(), "[cloud.time-based-job.enabled] must be true");
                 Assert.notNull(rocketMQProperties.getProducer(), "[cloud.rocketmq.producer] must not be null");
-                Assert.hasText(rocketMQProperties.getProducer().getGroup(), "[cloud.rocketmq.producer.group] must not be null");
+                Assert.hasText(rocketMQProperties.getProducer().getGroupName(), "[cloud.rocketmq.producer.groupName] must not be null");
                 //定时任务异步处理
                 timedJobExecutor = new ThreadPoolExecutor(timeBasedJobProperties.getThreadPoolSize(), timeBasedJobProperties.getThreadPoolSize(),
                         0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100), new MQThreadFactory("timed-job"));

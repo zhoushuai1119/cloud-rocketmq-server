@@ -9,16 +9,13 @@ spring:
 cloud:
   rocketmq:
     #不能使用name-server
-    nameServer: 139.196.208.53:9876
+    name-server: 139.196.208.53:9876
     producer:
-      group: p-${spring.application.name}
+      #生产者组名称
+      group-name: p-${spring.application.name}
     consumer:
       #消费者组名称
-      c-example-consumer:
-        subscription:
-          # topic : eventCode  最好都大写
-          TP_TEST_TOPIC_TRANSACTION: EC_TEST_CODE_TRANSACTION
-          TP_TEST_TOPIC: EC_TEST_CODE,EC_TEST_CODE_V2
+      group-name: c-example-consumer
 
 
 logging:

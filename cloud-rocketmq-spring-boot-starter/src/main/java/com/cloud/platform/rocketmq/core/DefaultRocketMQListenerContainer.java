@@ -307,7 +307,6 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
         consumer.setConsumeThreadMax(consumeThreadMax);
         consumeThreadMin = Math.min(consumeThreadMin, consumeThreadMax);
         consumer.setConsumeThreadMin(consumeThreadMin);
-        //consumer.setMessageModel(messageModel);
 
         //分配策略 改为环形分配（使得队列消费范围较为均匀）
         consumer.setAllocateMessageQueueStrategy(new AllocateMessageQueueAveragelyByCircle());

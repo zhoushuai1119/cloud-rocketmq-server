@@ -3,8 +3,6 @@ package com.cloud.platform.rocketmq;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.Map;
-
 /**
  * rocketMQ配置
  */
@@ -24,11 +22,6 @@ public class RocketMQProperties {
     private Producer producer;
 
     /**
-     * 校验topic eventCode 关系是否匹配
-     */
-    private Boolean topicRelationCheck = true;
-
-    /**
      * 事务消息生产者配置
      */
     private TransactionProducerCustom transactionProducerCustom;
@@ -37,16 +30,16 @@ public class RocketMQProperties {
      * 消费者配置.
      * key: consumer_group,需要和spring bean 同名；value：consumer配置信息
      */
-    private Map<String, Consumer> consumer;
+    private Consumer consumer;
 
 
     @Data
     public static class Producer {
 
         /**
-         * 生产者group
+         * 生产者组名称
          */
-        private String group;
+        private String groupName;
 
         /**
          * 超时毫秒数.
@@ -101,10 +94,9 @@ public class RocketMQProperties {
     @Data
     public static class Consumer {
         /**
-         * 消费的topicMap.
-         * key: topic, value:eventCodes format:{ec_0,ec_1}
+         * 消费者组名称
          */
-        private Map<String, String> subscription;
+        private String groupName;
 
         /**
          * 是否是广播模式.
