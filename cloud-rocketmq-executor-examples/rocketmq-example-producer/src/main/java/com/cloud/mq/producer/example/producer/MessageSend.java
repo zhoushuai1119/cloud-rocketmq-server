@@ -23,6 +23,7 @@ public class MessageSend {
     @Autowired
     private TransactionExecutor transactionExecutor;
 
+
     /**
      * 发送普通消息
      */

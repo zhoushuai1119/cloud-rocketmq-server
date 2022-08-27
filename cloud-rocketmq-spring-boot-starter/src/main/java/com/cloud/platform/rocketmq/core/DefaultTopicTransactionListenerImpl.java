@@ -79,8 +79,7 @@ public class DefaultTopicTransactionListenerImpl implements TransactionListener 
             } catch (Exception e) {
                 return LocalTransactionState.UNKNOW;
             }
-            LocalTransactionState transactionStateEnum = transTopicInfo.getTopicTransactionListener()
-                    .checkLocalTransaction(messageConvert);
+            LocalTransactionState transactionStateEnum = transTopicInfo.getTopicTransactionListener().checkLocalTransaction(messageConvert);
             return transactionStateEnum;
         } else {
             log.warn("cant find check transaction listener key = {}", key);

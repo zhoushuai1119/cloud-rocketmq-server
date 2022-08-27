@@ -25,6 +25,7 @@ public class MQProducerApplicationTest {
         messageSend.sendMessage();
     }
 
+
     /**
      * 发送事务消息测试
      */

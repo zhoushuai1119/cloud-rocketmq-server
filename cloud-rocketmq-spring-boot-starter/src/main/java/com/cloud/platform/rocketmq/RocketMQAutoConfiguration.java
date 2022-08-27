@@ -241,7 +241,7 @@ public class RocketMQAutoConfiguration {
                     //检查是否配置了*重复的监听器
                     for (Map.Entry<String, List<String>> entry : topicAndEventCodes.entrySet()) {
                         List<String> eventCodes = entry.getValue();
-                        if (eventCodes.size() > 1 && eventCodes.contains("*")) {
+                        if (eventCodes.size() > 1 && eventCodes.contains(Constant.TopicInfo.ALL)) {
                             throw new Exception("fail in listener code ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodes);
                         }
                     }
