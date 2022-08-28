@@ -3,19 +3,25 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.cloud.platform</groupId>
-    <artifactId>rocketmq-server</artifactId>
-    <version>1.6.0-RELEASES</version>
+    <groupId>io.github.zhoushuai1119</groupId>
+    <artifactId>cloud-rocketmq-server</artifactId>
+    <version>${release.version}</version>
     <packaging>pom</packaging>
 
-    <name>rocketmq-server</name>
-    <description>Project for Rocketmq Server</description>
+    <name>cloud-rocketmq-server</name>
+    <description>Project for Cloud Rocketmq Server</description>
 
     <parent>
         <groupId>com.cloud.platform</groupId>
         <artifactId>platform-parent</artifactId>
         <version>1.1.2-RELEASES</version>
     </parent>
+
+    <!-- 公共属性 -->
+    <properties>
+        <!-- 发布版本 -->
+        <release.version>3.6.0</release.version>
+    </properties>
 
     <modules>
         <module>cloud-rocketmq-base</module>

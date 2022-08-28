@@ -3,23 +3,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.zhoushuai1119</groupId>
     <artifactId>cloud-rocketmq-spring-boot-starter</artifactId>
-    <version>3.6.0</version>
+    <packaging>jar</packaging>
 
     <name>cloud-rocketmq-spring-boot-starter</name>
     <description>project for cloud-rocketmq-spring-boot-starter</description>
 
     <parent>
-        <groupId>com.cloud.platform</groupId>
-        <artifactId>rocketmq-server</artifactId>
-        <version>1.6.0-RELEASES</version>
+        <groupId>io.github.zhoushuai1119</groupId>
+        <artifactId>cloud-rocketmq-server</artifactId>
+        <version>${release.version}</version>
     </parent>
 
     <scm>
         <url>https://github.com/zhoushuai1119/cloud-rocketmq-spring-boot-starter</url>
         <connection>https://github.com/zhoushuai1119/cloud-rocketmq-spring-boot-starter.git</connection>
-        <tag>3.6.0</tag>
     </scm>
 
     <developers>
@@ -38,9 +36,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.cloud.platform</groupId>
+            <groupId>io.github.zhoushuai1119</groupId>
             <artifactId>cloud-rocketmq-base</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${release.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
