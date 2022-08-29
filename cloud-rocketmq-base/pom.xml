@@ -19,6 +19,7 @@
         <dependency>
             <groupId>com.cloud.platform</groupId>
             <artifactId>platform-common</artifactId>
+            <version>${parent.platform.version}</version>
         </dependency>
     </dependencies>
 
