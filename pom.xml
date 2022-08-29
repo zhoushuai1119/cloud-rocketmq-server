@@ -5,10 +5,10 @@
 
     <groupId>io.github.zhoushuai1119</groupId>
     <artifactId>cloud-rocketmq-server</artifactId>
-    <version>${release.version}</version>
+    <version>3.6.0</version>
     <packaging>pom</packaging>
 
-    <name>cloud-rocketmq-server</name>
+    <name>${project.artifactId}</name>
     <description>Project for Cloud Rocketmq Server</description>
 
     <parent>
@@ -17,17 +17,48 @@
         <version>1.1.2-RELEASES</version>
     </parent>
 
-    <!-- 公共属性 -->
-    <properties>
-        <!-- 发布版本 -->
-        <release.version>3.6.0</release.version>
-    </properties>
-
     <modules>
         <module>cloud-rocketmq-base</module>
         <module>cloud-rocketmq-spring-boot-starter</module>
         <module>cloud-rocketmq-executor-examples</module>
     </modules>
+
+    <!-- 公共属性 -->
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+        <java.version>8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.test.skip>true</maven.test.skip>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+    </properties>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License version 3</name>
+            <url>https://opensource.org/licenses/GPL-3.0</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/zhoushuai1119/cloud-rocketmq-spring-boot-starter.git</url>
+        <connection>scm:git:https://github.com/zhoushuai1119/cloud-rocketmq-spring-boot-starter.git</connection>
+        <developerConnection>scm:git@github.com:zhoushuai1119/cloud-rocketmq-spring-boot-starter.git
+        </developerConnection>
+        <tag>master</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>zhoushuai</id>
+            <name>zhoushuai</name>
+            <email>zs11195310@163.com</email>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
@@ -64,5 +95,76 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!-- 生成源码插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven-source-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- javadoc生成插件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven-javadoc-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <doclint>none</doclint>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- jar等文件签名插件，用于生成asc签名文件 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven-gpg-plugin.version}</version>
+                        <configuration>
+                            <useAgent>false</useAgent>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <name>Sonatype Nexus Snapshots</name>
+                    <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+                <repository>
+                    <id>ossrh</id>
+                    <name>Nexus Release Repository</name>
+                    <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 
 </project>

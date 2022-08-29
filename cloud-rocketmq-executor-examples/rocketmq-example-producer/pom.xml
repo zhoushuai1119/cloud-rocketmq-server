@@ -6,19 +6,15 @@
     <artifactId>rocketmq-example-producer</artifactId>
     <packaging>jar</packaging>
 
-    <name>rocketmq-example-producer</name>
+    <name>${project.artifactId}</name>
     <description>project for rocketmq-example-producer</description>
 
     <!--父工程的依赖-->
     <parent>
         <groupId>io.github.zhoushuai1119</groupId>
         <artifactId>rocketmq-executor-examples</artifactId>
-        <version>${release.version}</version>
+        <version>3.6.0</version>
     </parent>
-
-    <dependencies>
-
-    </dependencies>
 
     <build>
         <finalName>rocketmq-example-producer</finalName>

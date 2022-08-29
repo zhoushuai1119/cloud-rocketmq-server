@@ -6,13 +6,13 @@
     <artifactId>cloud-rocketmq-base</artifactId>
     <packaging>jar</packaging>
 
-    <name>cloud-rocketmq-base</name>
+    <name>${project.artifactId}</name>
     <description>project for cloud-rocketmq-base</description>
 
     <parent>
         <groupId>io.github.zhoushuai1119</groupId>
         <artifactId>cloud-rocketmq-server</artifactId>
-        <version>${release.version}</version>
+        <version>3.6.0</version>
     </parent>
 
     <dependencies>
@@ -21,9 +21,5 @@
             <artifactId>platform-common</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <finalName>cloud-rocketmq-base</finalName>
-    </build>
 
 </project>

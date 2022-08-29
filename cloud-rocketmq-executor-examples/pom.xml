@@ -5,10 +5,13 @@
     <artifactId>rocketmq-executor-examples</artifactId>
     <packaging>pom</packaging>
 
+    <name>${project.artifactId}</name>
+    <description>Project for rocketmq-executor-examples</description>
+
     <parent>
         <groupId>io.github.zhoushuai1119</groupId>
         <artifactId>cloud-rocketmq-server</artifactId>
-        <version>${release.version}</version>
+        <version>3.6.0</version>
     </parent>
 
     <modules>
@@ -20,7 +23,7 @@
         <dependency>
             <groupId>io.github.zhoushuai1119</groupId>
             <artifactId>cloud-rocketmq-spring-boot-starter</artifactId>
-            <version>${release.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
 
