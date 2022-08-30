@@ -91,8 +91,7 @@ public class RocketMQAutoConfiguration {
      * @throws Exception
      */
     @Bean
-    @ConditionalOnClass(value = {TransactionMQProducer.class})
-    @ConditionalOnMissingBean(value = {TransactionMQProducer.class})
+    @ConditionalOnBean(DefaultMQProducer.class)
     public TransactionMQProducer mqTransactionProducer(RocketMQProperties rocketMQProperties) {
         //事务消息model
         RocketMQProperties.TransactionProducerCustom tranProCustomModel = rocketMQProperties.getTransactionProducerCustom();
