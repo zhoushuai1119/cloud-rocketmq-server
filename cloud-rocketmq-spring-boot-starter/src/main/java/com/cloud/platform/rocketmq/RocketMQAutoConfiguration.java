@@ -198,7 +198,7 @@ public class RocketMQAutoConfiguration {
         public void afterPropertiesSet() throws Exception {
             if (Objects.nonNull(rocketMQProperties.getConsumer())) {
                 String consumerGroupName = rocketMQProperties.getConsumer().getGroupName();
-                //获取带有 @Component 的实现listener
+                //获取带有 @Component 的实现 CloudMQListener
                 Map<String/*consumerGroupName*/, CloudMQListener> beans = this.applicationContext.getBeansOfType(CloudMQListener.class);
                 Map<String/*topic*/, List<String>> topicAndEventCodes = new HashMap<>();
 
@@ -206,7 +206,8 @@ public class RocketMQAutoConfiguration {
                 if (MapUtils.isEmpty(beans)) {
                     Map<String/*beanName*/, TopicListener> beanMap = this.applicationContext.getBeansOfType(TopicListener.class);
                     if (MapUtils.isEmpty(beanMap)) {
-                        throw new Exception("fail to find rocketMQ message listener");
+                        log.warn("fail to find rocketMQ message listener");
+                        return;
                     }
 
                     //设置 topicAndEventCode  和 listener 关系
@@ -256,8 +257,6 @@ public class RocketMQAutoConfiguration {
                 if (MapUtils.isNotEmpty(beans)) {
                     //根据上下文得到 beanName rocketMQListener 等信息  实例化启动，消费者
                     beans.forEach((beanName, rocketMQListener) -> registerContainer(beanName, rocketMQListener, rocketMQTemplate, topicAndEventCodes));
-                } else {
-                    throw new Exception("fail to find rocketMQ message listener");
                 }
             }
         }
