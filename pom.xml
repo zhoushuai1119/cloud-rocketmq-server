@@ -36,7 +36,7 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/zhoushuai1119/cloud-rocketmq-spring-boot-starter.git</url>
+        <url>https://github.com/zhoushuai1119/cloud-rocketmq-spring-boot-starter.git11</url>
         <connection>scm:git:https://github.com/zhoushuai1119/cloud-rocketmq-spring-boot-starter.git</connection>
         <developerConnection>scm:git@github.com:zhoushuai1119/cloud-rocketmq-spring-boot-starter.git
         </developerConnection>
