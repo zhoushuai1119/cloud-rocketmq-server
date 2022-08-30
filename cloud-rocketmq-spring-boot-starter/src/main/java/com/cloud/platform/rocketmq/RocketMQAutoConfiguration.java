@@ -102,7 +102,7 @@ public class RocketMQAutoConfiguration {
             tranProCustomModel = new RocketMQProperties.TransactionProducerCustom();
             BeanUtils.copyProperties(producerConfigModel, tranProCustomModel);
         }
-        Assert.hasText(tranProCustomModel.getGroupName(), "[cloud.rocketmq.producer.groupName] must not be null");
+        Assert.hasText(tranProCustomModel.getGroupName(), "[cloud.rocketmq.transactionProducerCustom.groupName] must not be null");
         //事务生产者组名称
         String transactionGroupName = tranProCustomModel.getGroupName() + "-transaction";
 
