@@ -97,18 +97,18 @@ public class RocketMQAutoConfiguration {
         RocketMQProperties.TransactionProducerCustom tranProCustomModel = rocketMQProperties.getTransactionProducerCustom();
         //普通消息model
         RocketMQProperties.Producer producerConfigModel = rocketMQProperties.getProducer();
-        //生成事务消息生产groupName
         if (Objects.isNull(tranProCustomModel)) {
             //如果事务消息没有配置属性，则使用普通消息的属性组装生成model
             tranProCustomModel = new RocketMQProperties.TransactionProducerCustom();
             BeanUtils.copyProperties(producerConfigModel, tranProCustomModel);
         }
-        String groupName = tranProCustomModel.getGroupName() + "-transaction";
-        Assert.hasText(groupName, "[cloud.rocketmq.producer.groupName] must not be null");
+        Assert.hasText(tranProCustomModel.getGroupName(), "[cloud.rocketmq.producer.groupName] must not be null");
+        //事务生产者组名称
+        String transactionGroupName = tranProCustomModel.getGroupName() + "-transaction";
 
         //设置属性--事务消息生产
         //TransactionMQProducer producer = new TransactionMQProducer(groupName);
-        TransactionMQProducer producer = new TransactionMQProducer(null, groupName, null, tranProCustomModel.isEnableMsgTrace(), null);
+        TransactionMQProducer producer = new TransactionMQProducer(null, transactionGroupName, null, tranProCustomModel.isEnableMsgTrace(), null);
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
         producer.setSendMsgTimeout(tranProCustomModel.getSendMsgTimeout());
         producer.setRetryTimesWhenSendFailed(tranProCustomModel.getRetryTimesWhenSendFailed());
@@ -147,8 +147,8 @@ public class RocketMQAutoConfiguration {
      * @param mqProducer
      * @return
      */
-    @Bean(destroyMethod = "destroy")//销毁的时候调用对象的 destroy 方法
-    @ConditionalOnBean(value = {TransactionMQProducer.class})
+    @Bean(destroyMethod = "destroy")
+    @ConditionalOnBean(TransactionMQProducer.class)
     @ConditionalOnMissingBean(name = "rocketMQTransactionTemplate")
     public RocketMQTransactionTemplate rocketMQTransactionTemplate(TransactionMQProducer mqProducer) {
         RocketMQTransactionTemplate rocketMQTransactionTemplate = new RocketMQTransactionTemplate();
