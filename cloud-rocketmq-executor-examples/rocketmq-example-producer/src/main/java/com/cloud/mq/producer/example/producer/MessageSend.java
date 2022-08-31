@@ -1,6 +1,7 @@
 package com.cloud.mq.producer.example.producer;
 
 import com.cloud.mq.base.core.CloudMQTemplate;
+import com.cloud.mq.producer.example.dto.SendDTO;
 import com.cloud.mq.producer.example.producer.transaction.TransactionExecutor;
 import com.cloud.platform.common.domain.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class MessageSend {
             cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE", message);
             cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE_V2", message);
         }
+        cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_DTO", new SendDTO("zhoushuai",28));
         return BaseResponse.createSuccessResult(null);
     }
 

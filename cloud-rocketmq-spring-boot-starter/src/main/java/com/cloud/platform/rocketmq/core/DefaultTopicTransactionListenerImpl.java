@@ -117,8 +117,8 @@ public class DefaultTopicTransactionListenerImpl implements TransactionListener 
      * @param consumeTopic
      * @return
      */
-    private static TransactionTopicMsgInfo getConsumeTopicAndEventCode(TopicTransactionListener consumeTopic) {
-        Annotation annotation = null;
+    private static TransactionTopicMsgInfo getConsumeTopicAndEventCode(TopicTransactionListener consumeTopic) throws Exception {
+        Annotation annotation;
         Class clazz = consumeTopic.getClass();
         if (AopUtils.isAopProxy(consumeTopic)) {
             //@Transactional会增加AOP代理，查找真实的类对象
@@ -132,9 +132,14 @@ public class DefaultTopicTransactionListenerImpl implements TransactionListener 
             TransactionTopicMsgInfo topicInfo = null;
             Map<String, Object> attrs = AnnotationUtils.getAnnotationAttributes(annotation);
             if (attrs != null && attrs.containsKey(Constant.TopicInfo.TOPIC) && attrs.containsKey(Constant.TopicInfo.EVENT_CODE)) {
+                String topic = attrs.get(Constant.TopicInfo.TOPIC).toString();
+                String eventCode = attrs.get(Constant.TopicInfo.EVENT_CODE).toString();
+                if (Objects.equals(Constant.TopicInfo.ALL, eventCode.trim())) {
+                    throw new Exception("TansactionTopic eventCode must not use * , please use specific code");
+                }
                 topicInfo = new TransactionTopicMsgInfo();
-                topicInfo.setTopic(attrs.get(Constant.TopicInfo.TOPIC).toString());
-                topicInfo.setEventCode(attrs.get(Constant.TopicInfo.EVENT_CODE).toString());
+                topicInfo.setTopic(topic);
+                topicInfo.setEventCode(eventCode);
             }
             return topicInfo;
         }

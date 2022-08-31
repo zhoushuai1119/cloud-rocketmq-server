@@ -198,66 +198,64 @@ public class RocketMQAutoConfiguration {
         public void afterPropertiesSet() throws Exception {
             if (Objects.nonNull(rocketMQProperties.getConsumer())) {
                 String consumerGroupName = rocketMQProperties.getConsumer().getGroupName();
-                //获取带有 @Component 的实现 CloudMQListener
-                Map<String/*consumerGroupName*/, CloudMQListener> beans = this.applicationContext.getBeansOfType(CloudMQListener.class);
-                Map<String/*topic*/, List<String>> topicAndEventCodes = new HashMap<>();
-
+                Assert.notNull(consumerGroupName, "[cloud.rocketmq.consumer.groupName] must not be null");
                 //如果CloudMQListener是空的，注册空的CloudMQListener，找TopicListener bean，分topic消费消息
-                if (MapUtils.isEmpty(beans)) {
-                    Map<String/*beanName*/, TopicListener> beanMap = this.applicationContext.getBeansOfType(TopicListener.class);
-                    if (MapUtils.isEmpty(beanMap)) {
-                        log.warn("fail to find rocketMQ message listener");
-                        return;
-                    }
+                Map<String/*beanName*/, TopicListener> beanMap = this.applicationContext.getBeansOfType(TopicListener.class);
+                if (MapUtils.isEmpty(beanMap)) {
+                    log.warn("fail to find rocketMQ message listener");
+                    return;
+                }
+                //设置 topicAndEventCode  和 listener 关系
+                Map<String/*topic:eventCode*/, DefaultMessageListener.ConsumeTopicInfo> topicMap = new HashMap<>();
+                Map<String/*topic*/, List<String>> topicAndEventCodes = new HashMap<>();
+                Iterator<TopicListener> topicListenerIterator = beanMap.values().iterator();
+                while (topicListenerIterator.hasNext()) {
+                    TopicListener topicListener = topicListenerIterator.next();
+                    //listener 注解中的 topicAndEventCode 得到 topicInfo
+                    DefaultMessageListener.ConsumeTopicInfo topicInfo = getConsumeTopicAndEventCode(topicListener);
+                    if (Objects.nonNull(topicInfo)) {
+                        String topicAndEventCode = topicInfo.getTopic() + ":" + topicInfo.getEventCode();
 
-                    //设置 topicAndEventCode  和 listener 关系
-                    Map<String/*topic:eventCode*/, DefaultMessageListener.ConsumeTopicInfo> topicMap = new HashMap<>();
-                    Iterator<TopicListener> topicListenerIterator = beanMap.values().iterator();
-                    while (topicListenerIterator.hasNext()) {
-                        TopicListener topicListener = topicListenerIterator.next();
-                        //listener 注解中的 topicAndEventCode 得到 topicInfo
-                        DefaultMessageListener.ConsumeTopicInfo topicInfo = getConsumeTopicAndEventCode(topicListener);
-                        if (Objects.nonNull(topicInfo)) {
-                            String topicAndEventCode = topicInfo.getTopic() + ":" + topicInfo.getEventCode();
+                        DefaultMessageListener.ConsumeTopicInfo existed = topicMap.get(topicAndEventCode);
+                        if (Objects.nonNull(existed)) {
+                            throw new Exception("duplicated topic eventCode listener: " + existed.getTopicListener().getClass().getName() + " and " + topicListener.getClass().getName());
+                        } else {
+                            topicInfo.setTopicListener(topicListener);
+                            topicMap.put(topicAndEventCode, topicInfo);
 
-                            DefaultMessageListener.ConsumeTopicInfo existed = topicMap.get(topicAndEventCode);
-                            if (Objects.nonNull(existed)) {
-                                throw new Exception("duplicated topic eventCode listener: " + existed.getTopicListener().getClass().getName() + " and " + topicListener.getClass().getName());
-                            } else {
-                                topicInfo.setTopicListener(topicListener);
-                                topicMap.put(topicAndEventCode, topicInfo);
-
-                                //设置listener 中 topic 和eventCode 关系
-                                List<String> eventCodes = topicAndEventCodes.get(topicInfo.getTopic());
-                                if (CollectionUtils.isEmpty(eventCodes)) {
-                                    eventCodes = Lists.newArrayList();
-                                }
-                                eventCodes.add(topicInfo.getEventCode());
-                                topicAndEventCodes.put(topicInfo.getTopic(), eventCodes);
+                            //设置listener 中 topic 和eventCode 关系
+                            List<String> eventCodes = topicAndEventCodes.get(topicInfo.getTopic());
+                            if (CollectionUtils.isEmpty(eventCodes)) {
+                                eventCodes = Lists.newArrayList();
                             }
+                            eventCodes.add(topicInfo.getEventCode());
+                            topicAndEventCodes.put(topicInfo.getTopic(), eventCodes);
                         }
                     }
+                }
 
-                    //检查是否配置了*重复的监听器
-                    for (Map.Entry<String, List<String>> entry : topicAndEventCodes.entrySet()) {
-                        List<String> eventCodes = entry.getValue();
-                        if (eventCodes.size() > 1 && eventCodes.contains(Constant.TopicInfo.ALL)) {
-                            throw new Exception("fail in listener code ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodes);
-                        }
+                //检查是否配置了*重复的监听器
+                for (Map.Entry<String, List<String>> entry : topicAndEventCodes.entrySet()) {
+                    List<String> eventCodes = entry.getValue();
+                    if (eventCodes.size() > 1 && eventCodes.contains(Constant.TopicInfo.ALL)) {
+                        throw new Exception("fail in listener code ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodes);
                     }
-
-                    //为消费者,设置对应的监听Listener （包括topic 和 evencode关系）
-                    DefaultMessageListener messageListener = new DefaultMessageListener(topicMap);
-                    ///注册单例bean
-                    applicationContext.getBeanFactory().registerSingleton(consumerGroupName, messageListener);
-                    //执行完成后，bean 就有MonsterMQListener 对象了（DefaultMessageListener --extends --> 就有MonsterMQListener）
-                    beans = this.applicationContext.getBeansOfType(CloudMQListener.class);
                 }
 
-                if (MapUtils.isNotEmpty(beans)) {
-                    //根据上下文得到 beanName rocketMQListener 等信息  实例化启动，消费者
-                    beans.forEach((beanName, rocketMQListener) -> registerContainer(beanName, rocketMQListener, rocketMQTemplate, topicAndEventCodes));
+                //为消费者,设置对应的监听Listener （包括topic 和 evencode关系）
+                DefaultMessageListener messageListener = new DefaultMessageListener(topicMap);
+                ///注册单例bean
+                applicationContext.getBeanFactory().registerSingleton(consumerGroupName, messageListener);
+                //执行完成后，bean 就有CloudMQListener 对象了
+                Map<String/*consumerGroupName*/, CloudMQListener> beans = this.applicationContext.getBeansOfType(CloudMQListener.class);
+
+                //CloudMQListener只能存在一个默认实现DefaultMessageListener
+                if (MapUtils.isNotEmpty(beans) && beans.size() > 1) {
+                    throw new Exception("please must not implements CloudMQListener interface, must only exist one DefaultMessageListener !!!");
                 }
+
+                //根据上下文得到 beanName rocketMQListener 等信息  实例化启动，消费者
+                beans.forEach((beanName, rocketMQListener) -> registerContainer(beanName, rocketMQListener, rocketMQTemplate, topicAndEventCodes));
             }
         }
 
