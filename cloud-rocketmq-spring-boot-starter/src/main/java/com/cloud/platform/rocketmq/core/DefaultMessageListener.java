@@ -13,6 +13,7 @@ import java.util.Objects;
 
 /**
  * 默认的listener.
+ * @author shuai.zhou
  */
 @Slf4j
 public class DefaultMessageListener implements CloudMQListener<String> {

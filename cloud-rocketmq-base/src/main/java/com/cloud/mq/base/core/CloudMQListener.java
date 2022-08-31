@@ -5,7 +5,7 @@ import com.cloud.mq.base.dto.CloudMessage;
 
 /**
  * MQ消息监听
- * @param <T>
+ * @author shuai.zhou
  */
 public interface CloudMQListener<T> {
     /**
