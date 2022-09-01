@@ -16,6 +16,10 @@ cloud:
     consumer:
       #消费者组名称
       group-name: c-example-consumer
+    #acl权限认证
+    acl:
+      accessKey: zhoushuai
+      secretKey: zs19921119
 
 
 logging:

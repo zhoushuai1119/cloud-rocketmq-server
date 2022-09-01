@@ -13,6 +13,10 @@ cloud:
     producer:
       #生产者组名称
       group-name: p-${spring.application.name}
+    #acl权限认证
+    acl:
+      accessKey: zhoushuai
+      secretKey: zs19921119
 
 logging:
   level:

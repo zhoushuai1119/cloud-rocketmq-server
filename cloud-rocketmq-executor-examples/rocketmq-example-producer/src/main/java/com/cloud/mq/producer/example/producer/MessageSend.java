@@ -29,12 +29,11 @@ public class MessageSend {
      * 发送普通消息
      */
     public BaseResponse sendMessage() {
-        for (int i = 0; i < 3; i++) {
+        /*for (int i = 0; i < 3; i++) {
             final String message = "hello consumer i am producer!!!" + i;
             cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE", message);
-            cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE_V2", message);
-        }
-        cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_DTO", new SendDTO("zhoushuai",28));
+        }*/
+        cloudMQTemplate.send("TP_DTO_TEST_TOPIC", "EC_TEST_DTO", new SendDTO("zhoushuai",28));
         return BaseResponse.createSuccessResult(null);
     }
 

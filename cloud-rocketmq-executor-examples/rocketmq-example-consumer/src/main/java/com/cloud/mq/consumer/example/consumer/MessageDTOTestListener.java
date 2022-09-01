@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
  * @version: v1
  */
 @Slf4j
-@ConsumeTopic(topic = "TP_TEST_TOPIC", eventCode = "EC_TEST_DTO", log = true)
+@ConsumeTopic(topic = "TP_DTO_TEST_TOPIC", eventCode = "EC_TEST_DTO", log = true)
 public class MessageDTOTestListener implements TopicListener<SendDTO> {
 
     @Override
