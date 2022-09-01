@@ -3,10 +3,10 @@ package com.cloud.platform.rocketmq.core;
 
 import com.cloud.mq.base.core.CloudMQListener;
 import com.cloud.mq.base.dto.PushMessage;
-import com.cloud.platform.rocketmq.enums.ConsumeMode;
-import com.cloud.platform.rocketmq.enums.SelectorType;
 import com.cloud.platform.common.utils.JsonUtil;
 import com.cloud.platform.rocketmq.TimeBasedJobProperties;
+import com.cloud.platform.rocketmq.enums.ConsumeMode;
+import com.cloud.platform.rocketmq.enums.SelectorType;
 import com.cloud.platform.rocketmq.exception.DiscardOldJobException;
 import com.cloud.platform.rocketmq.timedjob.TimeBasedJobFeedback;
 import com.cloud.platform.rocketmq.timedjob.TimeBasedJobMessage;
@@ -14,6 +14,7 @@ import com.cloud.platform.rocketmq.utils.MqMessageUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.consumer.AllocateMessageQueueStrategy;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.MessageSelector;
 import org.apache.rocketmq.client.consumer.listener.*;
@@ -21,6 +22,7 @@ import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAverage
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+import org.apache.rocketmq.remoting.RPCHook;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
@@ -112,6 +114,9 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
     private RocketMQTemplate rocketMQTemplate;
 
     private DefaultMQPushConsumer consumer;
+
+    @Setter
+    private RPCHook rpcHook;
 
     private Class messageType;
 
@@ -301,15 +306,16 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
         Assert.notNull(consumerGroup, "Property 'consumerGroup' is required");
         Assert.notNull(nameServer, "Property 'nameServer' is required");
         Assert.notNull(subscription, "Property 'subscription' is required");
+        //分配策略 改为环形分配（使得队列消费范围较为均匀）
+        AllocateMessageQueueStrategy allocateMessageQueueStrategy = new AllocateMessageQueueAveragelyByCircle();
 
-        consumer = new DefaultMQPushConsumer(consumerGroup, enableMsgTrace);
+        consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, allocateMessageQueueStrategy, enableMsgTrace, null);
         consumer.setNamesrvAddr(nameServer);
         consumer.setConsumeThreadMax(consumeThreadMax);
         consumeThreadMin = Math.min(consumeThreadMin, consumeThreadMax);
         consumer.setConsumeThreadMin(consumeThreadMin);
+        consumer.setInstanceName(MqMessageUtil.getInstanceName(nameServer));
 
-        //分配策略 改为环形分配（使得队列消费范围较为均匀）
-        consumer.setAllocateMessageQueueStrategy(new AllocateMessageQueueAveragelyByCircle());
         //设置最大批量消费数量
         consumer.setConsumeMessageBatchMaxSize(consumeMessageBatchMaxSize);
 
@@ -350,10 +356,6 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
                 break;
             default:
                 throw new IllegalArgumentException("Property 'consumeMode' was wrong.");
-        }
-
-        if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {
-            ((RocketMQPushConsumerLifecycleListener) rocketMQListener).prepareStart(consumer);
         }
 
         if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {

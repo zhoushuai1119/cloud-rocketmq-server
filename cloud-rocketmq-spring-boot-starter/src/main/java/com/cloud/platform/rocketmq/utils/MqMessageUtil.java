@@ -8,6 +8,7 @@ import com.cloud.platform.rocketmq.core.TopicTransactionListener;
 import com.fasterxml.jackson.databind.JavaType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.springframework.aop.framework.AopProxyUtils;
@@ -216,6 +217,26 @@ public class MqMessageUtil {
             }
         }
         return JsonUtil.OBJECT_MAPPER.getTypeFactory().constructType(Object.class);
+    }
+
+    /**
+     * 获取实例名称(参考rocketmq-springboot)
+     * @param identify
+     * @return
+     */
+    public static String getInstanceName(String identify) {
+        char separator = '@';
+        int maxLength = 100;
+        StringBuilder instanceName = new StringBuilder();
+        if (identify.length() > maxLength) {
+            instanceName.append(identify, 0, maxLength)
+                    .append(identify.hashCode());
+        } else {
+            instanceName.append(identify);
+        }
+        instanceName.append(separator).append(UtilAll.getPid())
+                .append(separator).append(System.nanoTime());
+        return instanceName.toString();
     }
 
 }

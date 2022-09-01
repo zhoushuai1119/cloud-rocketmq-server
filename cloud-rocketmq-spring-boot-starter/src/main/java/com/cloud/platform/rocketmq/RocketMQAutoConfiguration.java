@@ -12,6 +12,8 @@ import com.google.common.base.Joiner;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.rocketmq.acl.common.AclClientRPCHook;
+import org.apache.rocketmq.acl.common.SessionCredentials;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
@@ -22,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -60,17 +63,33 @@ public class RocketMQAutoConfiguration {
         System.setProperty("rocketmq.client.logUseSlf4j", "true");
     }
 
+    /**
+     * 配置中心 acl账号
+     */
+    @Value("${cloud.rocketmq.acl.accessKey:-}")
+    private String accesskey;
+    /**
+     * 配置中心 acl密码
+     */
+    @Value("${cloud.rocketmq.acl.secretKey:-}")
+    private String secretkey;
+
+    @Bean
+    public AclClientRPCHook aclRPCHook() {
+        return new AclClientRPCHook(new SessionCredentials(accesskey, secretkey));
+    }
+
     @Bean
     @ConditionalOnClass(DefaultMQProducer.class)
     @ConditionalOnMissingBean(DefaultMQProducer.class)
     @ConditionalOnProperty(prefix = "cloud.rocketmq", value = {"name-server", "producer.group-name"})
-    public DefaultMQProducer mqProducer(RocketMQProperties rocketMQProperties) {
+    public DefaultMQProducer mqProducer(RocketMQProperties rocketMQProperties, AclClientRPCHook aclRPCHook) {
 
         RocketMQProperties.Producer producerConfig = rocketMQProperties.getProducer();
         String groupName = producerConfig.getGroupName();
         Assert.hasText(groupName, "[cloud.rocketmq.producer.groupName] must not be null");
 
-        DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroupName(), producerConfig.isEnableMsgTrace());
+        DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroupName(), aclRPCHook, producerConfig.isEnableMsgTrace(), null);
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
         producer.setSendMsgTimeout(producerConfig.getSendMsgTimeout());
         producer.setRetryTimesWhenSendFailed(producerConfig.getRetryTimesWhenSendFailed());
@@ -78,7 +97,6 @@ public class RocketMQAutoConfiguration {
         producer.setMaxMessageSize(producerConfig.getMaxMessageSize());
         producer.setCompressMsgBodyOverHowmuch(producerConfig.getCompressMsgBodyOverHowmuch());
         producer.setRetryAnotherBrokerWhenNotStoreOK(producerConfig.isRetryAnotherBrokerWhenNotStoreOk());
-
         return producer;
     }
 
@@ -91,7 +109,7 @@ public class RocketMQAutoConfiguration {
      */
     @Bean
     @ConditionalOnBean(DefaultMQProducer.class)
-    public TransactionMQProducer mqTransactionProducer(RocketMQProperties rocketMQProperties) {
+    public TransactionMQProducer mqTransactionProducer(RocketMQProperties rocketMQProperties, AclClientRPCHook aclRPCHook) {
         //事务消息model
         RocketMQProperties.TransactionProducerCustom tranProCustomModel = rocketMQProperties.getTransactionProducerCustom();
         //普通消息model
@@ -107,7 +125,7 @@ public class RocketMQAutoConfiguration {
 
         //设置属性--事务消息生产
         //TransactionMQProducer producer = new TransactionMQProducer(groupName);
-        TransactionMQProducer producer = new TransactionMQProducer(null, transactionGroupName, null, tranProCustomModel.isEnableMsgTrace(), null);
+        TransactionMQProducer producer = new TransactionMQProducer(null, transactionGroupName, aclRPCHook, tranProCustomModel.isEnableMsgTrace(), null);
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
         producer.setSendMsgTimeout(tranProCustomModel.getSendMsgTimeout());
         producer.setRetryTimesWhenSendFailed(tranProCustomModel.getRetryTimesWhenSendFailed());
@@ -174,6 +192,9 @@ public class RocketMQAutoConfiguration {
         private ConfigurableApplicationContext applicationContext;
 
         private AtomicLong counter = new AtomicLong(0);
+
+        @Resource
+        private AclClientRPCHook aclRPCHook;
 
         @Resource
         private RocketMQProperties rocketMQProperties;
@@ -331,10 +352,8 @@ public class RocketMQAutoConfiguration {
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_TIME_BASED_JOB_EXECUTOR, timedJobExecutor);
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROD_DISCARD_TASK_SECONDS, timeBasedJobProperties.getDiscardTaskSeconds());
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_ROCKETMQ_TEMPLATE, rocketMQTemplate);
-            //beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_INSTANCE_ID, instanceId);
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_CONSUME_MESSAGE_BATCH_MAX_SIZE, customConsumeMessageBatchMaxSize);
-            //beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.THREAD_POOL_METER_REGISTRY, meterRegistry);
-            //beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.RPC_HOOK, aclRPCHook);
+            beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.RPC_HOOK, aclRPCHook);
             beanBuilder.setDestroyMethodName(DefaultRocketMQListenerContainerConstants.METHOD_DESTROY);
 
             String containerBeanName = String.format("%s_%s", DefaultRocketMQListenerContainer.class.getName(), counter.incrementAndGet());
