@@ -65,6 +65,7 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- rocketmq config start -->
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-client</artifactId>
@@ -72,7 +73,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-broker</artifactId>
+            <artifactId>rocketmq-acl</artifactId>
             <version>${rocketmq-version}</version>
         </dependency>
         <dependency>
@@ -80,6 +81,7 @@
             <artifactId>rocketmq-tools</artifactId>
             <version>${rocketmq-version}</version>
         </dependency>
+        <!-- rocketmq config end -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
