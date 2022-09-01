@@ -17,8 +17,7 @@ import org.apache.rocketmq.client.impl.MQClientAPIImpl;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
-import org.springframework.aop.framework.Advised;
-import org.springframework.aop.support.AopUtils;
+import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
@@ -35,12 +34,10 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.Order;
 import org.springframework.util.Assert;
 
 import javax.annotation.Resource;
-import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,6 +45,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * RocketMQ自动配置
+ *
+ * @author shuai.zhou
  */
 @Configuration
 @EnableConfigurationProperties({RocketMQProperties.class, TimeBasedJobProperties.class})
@@ -237,7 +236,7 @@ public class RocketMQAutoConfiguration {
                 //检查是否配置了*重复的监听器
                 for (Map.Entry<String, List<String>> entry : topicAndEventCodes.entrySet()) {
                     List<String> eventCodes = entry.getValue();
-                    if (eventCodes.size() > 1 && eventCodes.contains(Constant.TopicInfo.ALL)) {
+                    if (eventCodes.size() > 1 && eventCodes.contains(PlatformCommonConstant.SymbolParam.ALL_SYMBOL)) {
                         throw new Exception("fail in listener code ! configured eventCode * ,cannot exist at the same time many EventCode " + eventCodes);
                     }
                 }
@@ -266,30 +265,18 @@ public class RocketMQAutoConfiguration {
          * @return
          */
         private DefaultMessageListener.ConsumeTopicInfo getConsumeTopicAndEventCode(TopicListener consumeTopic) {
-            Annotation annotation = null;
-            Class clazz = consumeTopic.getClass();
-            if (AopUtils.isAopProxy(consumeTopic)) {
-                //@Transactional会增加AOP代理，查找真实的类对象
-                clazz = ((Advised) consumeTopic).getTargetSource().getTargetClass();
-            }
-            annotation = clazz.getAnnotation(ConsumeTopic.class);
-
+            //获取代理对象的原始类型(因为添加@Transactional会生成aop代理对象)
+            Class<?> clazz = AopProxyUtils.ultimateTargetClass(consumeTopic);
+            ConsumeTopic annotation = clazz.getAnnotation(ConsumeTopic.class);
             if (Objects.isNull(annotation)) {
                 log.error("topic listener {} has no cnsumetopic annotation", consumeTopic.getClass().getName());
-            } else {
-                DefaultMessageListener.ConsumeTopicInfo topicInfo = null;
-                Map<String, Object> attrs = AnnotationUtils.getAnnotationAttributes(annotation);
-                if (MapUtils.isNotEmpty(attrs) && attrs.containsKey(Constant.TopicInfo.TOPIC) && attrs.containsKey(Constant.TopicInfo.EVENT_CODE)) {
-                    topicInfo = new DefaultMessageListener.ConsumeTopicInfo();
-                    topicInfo.setTopic(attrs.get(Constant.TopicInfo.TOPIC).toString());
-                    topicInfo.setEventCode(attrs.get(Constant.TopicInfo.EVENT_CODE).toString());
-                    if (attrs.containsKey(Constant.TopicInfo.LOG)) {
-                        topicInfo.setLog(Boolean.valueOf(attrs.get(Constant.TopicInfo.LOG).toString()));
-                    }
-                }
-                return topicInfo;
+                return null;
             }
-            return null;
+            DefaultMessageListener.ConsumeTopicInfo topicInfo = new DefaultMessageListener.ConsumeTopicInfo();
+            topicInfo.setTopic(annotation.topic());
+            topicInfo.setEventCode(annotation.eventCode());
+            topicInfo.setLog(annotation.log());
+            return topicInfo;
         }
 
         private void registerContainer(String beanName, CloudMQListener rocketMQListener, RocketMQTemplate rocketMQTemplate, Map<String, List<String>> topicAndEventCodes) {
@@ -307,13 +294,13 @@ public class RocketMQAutoConfiguration {
             AtomicBoolean isContainsTimedTask = new AtomicBoolean(false);
             topicAndEventCodes.forEach((topic, eventCodeList) -> {
                 String eventCodeListStr = Joiner.on(PlatformCommonConstant.SymbolParam.OR_SYMBOL).skipNulls().join(eventCodeList);
-                if (Constant.TopicInfo.ALL.equals(eventCodeListStr.trim())) {
+                if (Objects.equals(PlatformCommonConstant.SymbolParam.ALL_SYMBOL, eventCodeListStr.trim())) {
                     //支持在同一topic下，不同event_code支持通配符（如*）的方式
-                    topicTagsMap.put(topic, Constant.TopicInfo.ALL);
+                    topicTagsMap.put(topic, PlatformCommonConstant.SymbolParam.ALL_SYMBOL);
                 } else {
                     topicTagsMap.put(topic, eventCodeListStr);
                 }
-                if (TimeBasedJobProperties.JOB_TOPIC.equals(topic)) {
+                if (Objects.equals(TimeBasedJobProperties.JOB_TOPIC, topic)) {
                     isContainsTimedTask.set(true);
                 }
             });

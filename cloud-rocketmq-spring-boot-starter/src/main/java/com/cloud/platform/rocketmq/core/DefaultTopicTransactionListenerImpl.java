@@ -1,8 +1,8 @@
 package com.cloud.platform.rocketmq.core;
 
 
-import com.cloud.mq.base.constant.Constant;
 import com.cloud.mq.base.dto.CloudMessage;
+import com.cloud.platform.common.constants.PlatformCommonConstant;
 import com.cloud.platform.rocketmq.annotation.TansactionTopic;
 import com.cloud.platform.rocketmq.utils.MqMessageUtil;
 import com.fasterxml.jackson.databind.JavaType;
@@ -14,11 +14,8 @@ import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.producer.TransactionListener;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
-import org.springframework.aop.framework.Advised;
-import org.springframework.aop.support.AopUtils;
-import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.aop.framework.AopProxyUtils;
 
-import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,32 +115,20 @@ public class DefaultTopicTransactionListenerImpl implements TransactionListener 
      * @return
      */
     private static TransactionTopicMsgInfo getConsumeTopicAndEventCode(TopicTransactionListener consumeTopic) throws Exception {
-        Annotation annotation;
-        Class clazz = consumeTopic.getClass();
-        if (AopUtils.isAopProxy(consumeTopic)) {
-            //@Transactional会增加AOP代理，查找真实的类对象
-            clazz = ((Advised) consumeTopic).getTargetSource().getTargetClass();
-        }
-        annotation = clazz.getAnnotation(TansactionTopic.class);
-
-        if (annotation == null) {
+        //获取代理对象的原始类型(因为添加@Transactional会生成aop代理对象)
+        Class<?> clazz = AopProxyUtils.ultimateTargetClass(consumeTopic);
+        TansactionTopic annotation = clazz.getAnnotation(TansactionTopic.class);
+        if (Objects.isNull(annotation)) {
             log.error("transaction topic listener {} has no consumetopic annotation", consumeTopic.getClass().getName());
-        } else {
-            TransactionTopicMsgInfo topicInfo = null;
-            Map<String, Object> attrs = AnnotationUtils.getAnnotationAttributes(annotation);
-            if (attrs != null && attrs.containsKey(Constant.TopicInfo.TOPIC) && attrs.containsKey(Constant.TopicInfo.EVENT_CODE)) {
-                String topic = attrs.get(Constant.TopicInfo.TOPIC).toString();
-                String eventCode = attrs.get(Constant.TopicInfo.EVENT_CODE).toString();
-                if (Objects.equals(Constant.TopicInfo.ALL, eventCode.trim())) {
-                    throw new Exception("TansactionTopic eventCode must not use * , please use specific code");
-                }
-                topicInfo = new TransactionTopicMsgInfo();
-                topicInfo.setTopic(topic);
-                topicInfo.setEventCode(eventCode);
-            }
-            return topicInfo;
+            return null;
         }
-        return null;
+        if (Objects.equals(PlatformCommonConstant.SymbolParam.ALL_SYMBOL, annotation.eventCode().trim())) {
+            throw new Exception("TansactionTopic eventCode must not use * , please use specific code");
+        }
+        TransactionTopicMsgInfo topicInfo = new TransactionTopicMsgInfo();
+        topicInfo.setTopic(annotation.topic());
+        topicInfo.setEventCode(annotation.eventCode());
+        return topicInfo;
     }
 
     /**

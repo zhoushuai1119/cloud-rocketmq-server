@@ -10,8 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
-import org.springframework.aop.framework.Advised;
-import org.springframework.aop.support.AopUtils;
+import org.springframework.aop.framework.AopProxyUtils;
 
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
@@ -150,14 +149,8 @@ public class MqMessageUtil {
      * @return
      */
     public static JavaType getMessageJavaType2Topic(TopicListener topicListener) {
-        Type[] interfaces = null;
-        Class clazz = topicListener.getClass();
-        if (AopUtils.isAopProxy(topicListener)) {
-            //@Transactional会增加AOP代理，查找真实的类对象
-            clazz = ((Advised) topicListener).getTargetSource().getTargetClass();
-        }
-        interfaces = clazz.getGenericInterfaces();
-
+        Class<?> clazz = AopProxyUtils.ultimateTargetClass(topicListener);
+        Type[] interfaces = clazz.getGenericInterfaces();
         if (Objects.nonNull(interfaces)) {
             for (Type type : interfaces) {
                 if (type instanceof ParameterizedType) {
@@ -167,14 +160,12 @@ public class MqMessageUtil {
                         if (Objects.nonNull(actualTypeArguments) && actualTypeArguments.length > 0) {
                             Type actualTypeArgu = actualTypeArguments[0];
                             return JsonUtil.OBJECT_MAPPER.getTypeFactory().constructType(actualTypeArgu);
-
                         } else {
                             return JsonUtil.OBJECT_MAPPER.getTypeFactory().constructType(Object.class);
                         }
                     }
                 }
             }
-
             return JsonUtil.OBJECT_MAPPER.getTypeFactory().constructType(Object.class);
         } else {
             return JsonUtil.OBJECT_MAPPER.getTypeFactory().constructType(Object.class);
@@ -182,19 +173,12 @@ public class MqMessageUtil {
     }
 
     /**
-     * 获取MonsterMQListener 的Class
-     * 启动时候调用 this.messageType = MqMessageUtil.getMessageTypeByMonsterMQListener(rocketMQListener);
+     * 获取CloudMQListener 的Class
+     * 启动时候调用 this.messageType = MqMessageUtil.getMessageTypeByCloudMQListener(rocketMQListener);
      */
-    public static Class getMessageTypeByMonsterMQListener(CloudMQListener cloudMQListener) {
-        Type[] interfaces = null;
-        Class clazz = cloudMQListener.getClass();
-        if (AopUtils.isAopProxy(cloudMQListener)) {
-            //@Transactional会增加AOP代理，查找真实的类对象
-            clazz = ((Advised) cloudMQListener).getTargetSource().getTargetClass();
-        }
-        interfaces = clazz.getGenericInterfaces();
-
-
+    public static Class getMessageTypeByCloudMQListener(CloudMQListener cloudMQListener) {
+        Class<?> clazz = AopProxyUtils.ultimateTargetClass(cloudMQListener);
+        Type[] interfaces = clazz.getGenericInterfaces();
         if (Objects.nonNull(interfaces)) {
             for (Type type : interfaces) {
                 if (type instanceof ParameterizedType) {
@@ -209,7 +193,6 @@ public class MqMessageUtil {
                     }
                 }
             }
-
             return Object.class;
         } else {
             return Object.class;
@@ -232,9 +215,7 @@ public class MqMessageUtil {
                 return JsonUtil.OBJECT_MAPPER.getTypeFactory().constructType(Object.class);
             }
         }
-
         return JsonUtil.OBJECT_MAPPER.getTypeFactory().constructType(Object.class);
-
     }
 
 }

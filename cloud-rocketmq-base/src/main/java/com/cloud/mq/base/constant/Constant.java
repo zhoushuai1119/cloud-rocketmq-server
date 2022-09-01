@@ -8,29 +8,6 @@ package com.cloud.mq.base.constant;
  */
 public class Constant {
 
-    public interface TopicInfo {
-        /**
-         * topic
-         */
-        String TOPIC = "topic";
-
-        /**
-         * eventCode
-         */
-        String EVENT_CODE = "eventCode";
-
-        /**
-         * log
-         */
-        String LOG = "log";
-
-        /**
-         * ALL
-         */
-        String ALL = "*";
-
-    }
-
     public interface SelectorType {
         /**
          * SQL92

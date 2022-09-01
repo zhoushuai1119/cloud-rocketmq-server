@@ -137,7 +137,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
         initRocketMQPushConsumer();
 
         // parse message type
-        this.messageType = MqMessageUtil.getMessageTypeByMonsterMQListener(rocketMQListener);
+        this.messageType = MqMessageUtil.getMessageTypeByCloudMQListener(rocketMQListener);
         log.debug("msgType: {}", messageType.getName());
 
         consumer.start();
