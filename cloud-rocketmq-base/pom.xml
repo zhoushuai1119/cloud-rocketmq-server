@@ -12,14 +12,14 @@
     <parent>
         <groupId>io.github.zhoushuai1119</groupId>
         <artifactId>cloud-rocketmq-server</artifactId>
-        <version>3.7.0</version>
+        <version>${rocketmq-server.version}</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>io.github.zhoushuai1119</groupId>
             <artifactId>platform-common</artifactId>
-            <version>${parent.platform.version}</version>
+            <version>${platform-parent.version}</version>
         </dependency>
     </dependencies>
 

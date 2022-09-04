@@ -13,7 +13,7 @@
     <parent>
         <groupId>io.github.zhoushuai1119</groupId>
         <artifactId>rocketmq-executor-examples</artifactId>
-        <version>3.7.0</version>
+        <version>${rocketmq-server.version}</version>
     </parent>
 
     <build>
