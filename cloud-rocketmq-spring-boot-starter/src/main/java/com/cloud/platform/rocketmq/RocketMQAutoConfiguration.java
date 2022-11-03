@@ -1,6 +1,5 @@
 package com.cloud.platform.rocketmq;
 
-import com.beust.jcommander.internal.Lists;
 import com.cloud.mq.base.constant.Constant;
 import com.cloud.mq.base.core.CloudMQListener;
 import com.cloud.platform.common.constants.PlatformCommonConstant;
@@ -246,7 +245,7 @@ public class RocketMQAutoConfiguration {
                             //设置listener 中 topic 和eventCode 关系
                             List<String> eventCodes = topicAndEventCodes.get(topicInfo.getTopic());
                             if (CollectionUtils.isEmpty(eventCodes)) {
-                                eventCodes = Lists.newArrayList();
+                                eventCodes = new ArrayList<>();
                             }
                             eventCodes.add(topicInfo.getEventCode());
                             topicAndEventCodes.put(topicInfo.getTopic(), eventCodes);
