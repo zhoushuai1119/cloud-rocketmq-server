@@ -16,8 +16,6 @@
  */
 package org.apache.rocketmq.dashboard.task;
 
-import java.util.Map;
-import javax.annotation.Resource;
 import org.apache.rocketmq.dashboard.model.ConsumerMonitorConfig;
 import org.apache.rocketmq.dashboard.model.GroupConsumeInfo;
 import org.apache.rocketmq.dashboard.service.ConsumerService;
@@ -25,7 +23,11 @@ import org.apache.rocketmq.dashboard.service.MonitorService;
 import org.apache.rocketmq.dashboard.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.util.Map;
 
 @Component
 public class MonitorTask {
@@ -37,12 +39,16 @@ public class MonitorTask {
     @Resource
     private ConsumerService consumerService;
 
-//    @Scheduled(cron = "* * * * * ?")
+    /**
+     * 每一分钟执行一次
+     */
+    @Scheduled(fixedRate = 60 * 1000)
     public void scanProblemConsumeGroup() {
         for (Map.Entry<String, ConsumerMonitorConfig> configEntry : monitorService.queryConsumerMonitorConfig().entrySet()) {
             GroupConsumeInfo consumeInfo = consumerService.queryGroup(configEntry.getKey());
             if (consumeInfo.getCount() < configEntry.getValue().getMinCount() || consumeInfo.getDiffTotal() > configEntry.getValue().getMaxDiffTotal()) {
-                logger.info("op=look consumeInfo {}", JsonUtil.obj2String(consumeInfo)); // notify the alert system
+                logger.info("op=look consumeInfo {}", JsonUtil.obj2String(consumeInfo));
+                // notify the alert system
             }
         }
     }

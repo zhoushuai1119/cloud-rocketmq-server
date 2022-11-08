@@ -56,7 +56,7 @@
                     <tr ng-repeat="consumerGroup in consumerGroupShowList"
                         ng-init="sysFlag = consumerGroup.group.startsWith('%SYS%')">
                         <td class="text-center"><font color={{sysFlag?"red":""}}>
-                            {{sysFlag?consumerGroup.group.substring(5):consumerGroup.group}}</font></td>
+                            {{sysFlag ? consumerGroup.group.substring(5) : consumerGroup.group}}</font></td>
                         <td class="text-center">{{consumerGroup.count}}</td>
                         <td class="text-center">{{consumerGroup.version}}</td>
                         <td class="text-center">{{consumerGroup.consumeType}}</td>
@@ -75,9 +75,9 @@
                             <button name="client" ng-click="updateConfigDialog(consumerGroup.group)"
                                     class="btn btn-raised btn-sm btn-primary" type="button">{{'CONFIG' | translate}}
                             </button>
-                            <!--<button name="client" ng-click="monitor(consumerGroup.group)"-->
-                            <!--class="btn btn-sm btn-primary" type="button">Monitor Config-->
-                            <!--</button>-->
+                            <button name="client" ng-click="monitor(consumerGroup.group)"
+                                    class="btn btn-sm btn-primary" type="button">Monitor Config
+                            </button>
                             <button name="client" ng-click="delete(consumerGroup.group)"
                                     class="btn btn-raised btn-sm btn-danger"
                                     ng-show="{{!sysFlag && writeOperationEnabled}}"
@@ -156,7 +156,7 @@
 <!--消费（订阅）者详情-->
 <script type="text/ng-template" id="clientInfoDialog">
     <div class="modal-header">
-        <h4 class="modal-title">[{{ngDialogData.consumerGroupName}}]{{'CLIENT'|translate}}</h4>
+        <h4 class="modal-title">[{{ngDialogData.consumerGroupName}}]{{'CLIENT' | translate}}</h4>
     </div>
     <div class="modal-body ">
         <form class="form-horizontal" novalidate>
@@ -204,7 +204,7 @@
     <div>
         <div>
             <div class="modal-header">
-                <h4 class="modal-title">{{'SUBSCRIPTION_CHANGE'|translate}}</h4>
+                <h4 class="modal-title">{{'SUBSCRIPTION_CHANGE' | translate}}</h4>
             </div>
             <div class="modal-body " ng-repeat="item in ngDialogData.consumerRequestList">
                 <form id="addAppForm" name="addAppForm" class="form-horizontal" novalidate>
@@ -240,7 +240,8 @@
                     <div class="form-group">
                         <label class="control-label col-sm-3">consumeEnable:</label>
                         <div class="col-sm-9">
-                            <md-switch class="md-primary" ng-disabled="{{!ngDialogData.writeOperationEnabled}}" md-no-ink
+                            <md-switch class="md-primary" ng-disabled="{{!ngDialogData.writeOperationEnabled}}"
+                                       md-no-ink
                                        aria-label="Switch No Ink" ng-model="item.subscriptionGroupConfig.consumeEnable">
                             </md-switch>
                             <!--<input class="form-control" ng-model="item.subscriptionGroupConfig.consumeEnable"-->
@@ -259,7 +260,8 @@
                     <div class="form-group">
                         <label class="control-label col-sm-3">consumeBroadcastEnable:</label>
                         <div class="col-sm-9">
-                            <md-switch class="md-primary" ng-disabled="{{!ngDialogData.writeOperationEnabled}}" md-no-ink
+                            <md-switch class="md-primary" ng-disabled="{{!ngDialogData.writeOperationEnabled}}"
+                                       md-no-ink
                                        aria-label="Switch No Ink"
                                        ng-model="item.subscriptionGroupConfig.consumeBroadcastEnable">
                             </md-switch>
@@ -405,8 +407,8 @@
                             <td><label>{{ 'DELAY' | translate }}</label></td>
                             <td>{{consumeDetail.diffTotal}}</td>
                             <td><label>{{ 'LAST_CONSUME_TIME' | translate }}</label></td>
-                            <td>{{(consumeDetail.lastTimestamp == 0)?"N/A":consumeDetail.lastTimestamp |
-                                date:'yyyy-MM-dd HH:mm:ss'}}
+                            <td>{{(consumeDetail.lastTimestamp == 0) ? "N/A" : consumeDetail.lastTimestamp |
+                                    date:'yyyy-MM-dd HH:mm:ss'}}
                             </td>
                         </tr>
                     </table>
@@ -432,8 +434,9 @@
                                 {{item.clientInfo}}</a></td>
                             <td class="text-center">{{item.brokerOffset}}</td>
                             <td class="text-center">{{item.consumerOffset}}</td>
-                            <td class="text-center">{{item.brokerOffset-item.consumerOffset}}</td>
-                            <td class="text-center">{{(item.lastTimestamp == 0)?"N/A":item.lastTimestamp | date:'yyyy-MM-dd HH:mm:ss'}}
+                            <td class="text-center">{{item.brokerOffset - item.consumerOffset}}</td>
+                            <td class="text-center">
+                                {{(item.lastTimestamp == 0) ? "N/A" : item.lastTimestamp | date:'yyyy-MM-dd HH:mm:ss'}}
                             </td>
                         </tr>
                     </table>
