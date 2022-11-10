@@ -20,9 +20,7 @@ import java.util.Map;
 public class BatchProducerTimingSampleContextImpl implements ProducerTimingSampleContext {
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
-
     private final Map<String, Timer.Sample> timerSamples = Maps.newHashMap();
-
     private MeterRegistry registry;
     private String topic;
 

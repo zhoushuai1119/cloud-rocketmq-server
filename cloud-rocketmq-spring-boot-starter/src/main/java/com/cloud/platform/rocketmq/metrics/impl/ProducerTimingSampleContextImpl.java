@@ -11,20 +11,16 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 生产端Metrics
- *
- * @Author Wang Lin(王霖)
- * @Date 2018/8/20
- * @Time 上午11:31
+ * @description: 生产端Metrics
+ * @author: zhou shuai
+ * @date: 2022/11/10 20:10
  */
 public class ProducerTimingSampleContextImpl implements ProducerTimingSampleContext {
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
     public static final String PRODUCER_METRICS_NAME = "mq.producer";
     public static final String TOPIC_TIME_TASK_FEEDBACK = "TP_F_FB";
-
     private final Timer.Sample timerSample;
-
     private MeterRegistry registry;
     private String topic;
     private String eventCode;
