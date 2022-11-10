@@ -7,7 +7,9 @@ import com.cloud.platform.rocketmq.annotation.ConsumeTopic;
 import com.cloud.platform.rocketmq.core.*;
 import com.cloud.platform.rocketmq.enums.ConsumeMode;
 import com.cloud.platform.rocketmq.enums.SelectorType;
+import com.cloud.platform.rocketmq.metrics.MQMetrics;
 import com.google.common.base.Joiner;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -166,9 +168,10 @@ public class RocketMQAutoConfiguration {
     @Bean(destroyMethod = "destroy")
     @ConditionalOnBean(TransactionMQProducer.class)
     @ConditionalOnMissingBean(name = "rocketMQTransactionTemplate")
-    public RocketMQTransactionTemplate rocketMQTransactionTemplate(TransactionMQProducer mqProducer) {
+    public RocketMQTransactionTemplate rocketMQTransactionTemplate(TransactionMQProducer mqProducer, RocketMQProperties properties) {
         RocketMQTransactionTemplate rocketMQTransactionTemplate = new RocketMQTransactionTemplate();
         rocketMQTransactionTemplate.setProducer(mqProducer);
+        rocketMQTransactionTemplate.setMetricsProperty(properties.getMetrics() == null ? new RocketMQProperties.Metrics() : properties.getMetrics());
         return rocketMQTransactionTemplate;
     }
 
@@ -176,9 +179,10 @@ public class RocketMQAutoConfiguration {
     @Bean(destroyMethod = "destroy")
     @ConditionalOnBean(DefaultMQProducer.class)
     @ConditionalOnMissingBean(name = "rocketMQTemplate")
-    public RocketMQTemplate rocketMQTemplate(DefaultMQProducer mqProducer) {
+    public RocketMQTemplate rocketMQTemplate(DefaultMQProducer mqProducer, RocketMQProperties properties) {
         RocketMQTemplate rocketMQTemplate = new RocketMQTemplate();
         rocketMQTemplate.setProducer(mqProducer);
+        rocketMQTemplate.setMetricsProperty(properties.getMetrics() == null ? new RocketMQProperties.Metrics() : properties.getMetrics());
         return rocketMQTemplate;
     }
 
@@ -203,6 +207,9 @@ public class RocketMQAutoConfiguration {
 
         @Autowired(required = false)
         private TimeBasedJobProperties timeBasedJobProperties;
+
+        @Autowired(required = false)
+        private MeterRegistry meterRegistry;
 
         public ListenerContainerConfiguration() {
 
@@ -273,8 +280,17 @@ public class RocketMQAutoConfiguration {
                     throw new Exception("please must not implements CloudMQListener interface, must only exist one DefaultMessageListener !!!");
                 }
 
+                //监控信息
+                Map<String, MQMetrics> metricsMap = this.applicationContext.getBeansOfType(MQMetrics.class);
+                MQMetrics mqMetrics;
+                if (MapUtils.isNotEmpty(metricsMap)) {
+                    mqMetrics = metricsMap.values().iterator().next();
+                } else {
+                    mqMetrics = null;
+                }
+
                 //根据上下文得到 beanName rocketMQListener 等信息  实例化启动，消费者
-                beans.forEach((beanName, rocketMQListener) -> registerContainer(beanName, rocketMQListener, rocketMQTemplate, topicAndEventCodes));
+                beans.forEach((beanName, rocketMQListener) -> registerContainer(beanName, rocketMQListener, rocketMQTemplate, topicAndEventCodes, mqMetrics));
             }
         }
 
@@ -299,7 +315,7 @@ public class RocketMQAutoConfiguration {
             return topicInfo;
         }
 
-        private void registerContainer(String beanName, CloudMQListener rocketMQListener, RocketMQTemplate rocketMQTemplate, Map<String, List<String>> topicAndEventCodes) {
+        private void registerContainer(String beanName, CloudMQListener rocketMQListener, RocketMQTemplate rocketMQTemplate, Map<String, List<String>> topicAndEventCodes, MQMetrics mqMetrics) {
 
             Assert.notNull(rocketMQProperties.getConsumer(), "[cloud.rocketmq.consumer] must not be null");
             RocketMQProperties.Consumer consumerProperties = rocketMQProperties.getConsumer();
@@ -351,7 +367,11 @@ public class RocketMQAutoConfiguration {
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_TIME_BASED_JOB_EXECUTOR, timedJobExecutor);
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROD_DISCARD_TASK_SECONDS, timeBasedJobProperties.getDiscardTaskSeconds());
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_ROCKETMQ_TEMPLATE, rocketMQTemplate);
+            beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_METRICS, mqMetrics);
+            beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_METRICS_PROPERTY, rocketMQProperties.getMetrics() == null ? new RocketMQProperties.Metrics() : rocketMQProperties.getMetrics());
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_CONSUME_MESSAGE_BATCH_MAX_SIZE, customConsumeMessageBatchMaxSize);
+            beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.TOPIC_THREAD_POOL_MAP, rocketMQProperties.getConsumerThreadPool());
+            beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.THREAD_POOL_METER_REGISTRY, meterRegistry);
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.RPC_HOOK, aclRPCHook);
             beanBuilder.setDestroyMethodName(DefaultRocketMQListenerContainerConstants.METHOD_DESTROY);
 

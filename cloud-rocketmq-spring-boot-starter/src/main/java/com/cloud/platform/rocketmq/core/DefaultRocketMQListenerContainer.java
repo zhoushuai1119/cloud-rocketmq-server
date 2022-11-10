@@ -4,13 +4,17 @@ package com.cloud.platform.rocketmq.core;
 import com.cloud.mq.base.core.CloudMQListener;
 import com.cloud.mq.base.dto.PushMessage;
 import com.cloud.platform.common.utils.JsonUtil;
+import com.cloud.platform.rocketmq.RocketMQProperties;
 import com.cloud.platform.rocketmq.TimeBasedJobProperties;
 import com.cloud.platform.rocketmq.enums.ConsumeMode;
 import com.cloud.platform.rocketmq.enums.SelectorType;
 import com.cloud.platform.rocketmq.exception.DiscardOldJobException;
+import com.cloud.platform.rocketmq.metrics.ConsumerTimingSampleContext;
+import com.cloud.platform.rocketmq.metrics.MQMetrics;
 import com.cloud.platform.rocketmq.timedjob.TimeBasedJobFeedback;
 import com.cloud.platform.rocketmq.timedjob.TimeBasedJobMessage;
 import com.cloud.platform.rocketmq.utils.MqMessageUtil;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,7 @@ import org.apache.rocketmq.client.consumer.MessageSelector;
 import org.apache.rocketmq.client.consumer.listener.*;
 import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragelyByCircle;
 import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.impl.consumer.ConsumerThreadPoolConfig;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.remoting.RPCHook;
@@ -106,7 +111,19 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
 
     @Setter
     @Getter
+    private Map<String, ConsumerThreadPoolConfig> topicThreadPoolConfig;
+
+    @Setter
+    @Getter
     private int discardTaskSeconds;
+
+    @Getter
+    @Setter
+    private MQMetrics metrics;
+
+    @Getter
+    @Setter
+    private RocketMQProperties.Metrics metricsProperty;
 
     private AtomicLong discardedTaskCount = new AtomicLong();
 
@@ -120,9 +137,16 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
 
     private Class messageType;
 
+    private static final Integer defaultConsumeThreadMax = 64;
+    private static final Integer defaultConsumeThreadMin = 20;
+
     @Setter
     @Getter
     private int consumeMessageBatchMaxSize;
+
+    @Setter
+    @Getter
+    private MeterRegistry threadPoolMeterRegistry;
 
     @Override
     public void destroy() {
@@ -191,13 +215,21 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
 
     private void consumeInner(MessageExt messageExt) throws Exception {
         long now = System.currentTimeMillis();
+        //判断是否是定时任务，定时任务异步执行
+        ConsumerTimingSampleContext metricsContext = null;
+        if (metricsProperty.isEnabled() && metrics != null) {
+            metricsContext = metrics.startConsume(messageExt.getTopic(), messageExt.getTags(), messageExt.getReconsumeTimes());
+        }
 
         if (TimeBasedJobProperties.JOB_TOPIC.equals(messageExt.getTopic())) {
-            handleTimeBasedJob(messageExt);
+            handleTimeBasedJob(messageExt, metricsContext);
         } else {
             try {
                 rocketMQListener.onMessage(MqMessageUtil.doConvertMessageExtByClass(messageExt, messageType, true));
+                recordMetrics(metricsContext, null);
             } catch (Exception e) {
+                recordMetrics(metricsContext, e);
+                //if (messageExt.getReconsumeTimes() >= consumer)
                 throw e;
             }
         }
@@ -229,7 +261,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
     /**
      * 处理定时任务
      */
-    private void handleTimeBasedJob(MessageExt messageExt) {
+    private void handleTimeBasedJob(MessageExt messageExt, ConsumerTimingSampleContext metricsContext) {
         String str = new String(messageExt.getBody(), Charset.forName(charset));
         TimeBasedJobMessage timeBasedJobMessage = null;
         try {
@@ -262,17 +294,24 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
                     } catch (Exception e) {
                         log.error("send job execute feedback error", e);
                     }
+                    recordMetrics(metricsContext, null);
                 } catch (Throwable throwable) {
-                    handleTimeBasedJobException(str, finalTimeBasedJob, throwable);
+                    handleTimeBasedJobException(str, finalTimeBasedJob, throwable, metricsContext);
                 }
             });
         } catch (Exception e) {
-            handleTimeBasedJobException(str, timeBasedJobMessage, e);
+            handleTimeBasedJobException(str, timeBasedJobMessage, e, metricsContext);
         }
     }
 
+    private void recordMetrics(ConsumerTimingSampleContext metricsContext, Throwable e) {
+        if (metricsContext != null) {
+            metricsContext.record(e);
+        }
+    }
 
-    private void handleTimeBasedJobException(String str, TimeBasedJobMessage timeBasedJobMessage, Throwable throwable) {
+    private void handleTimeBasedJobException(String str, TimeBasedJobMessage timeBasedJobMessage, Throwable throwable, ConsumerTimingSampleContext metricsContext) {
+        recordMetrics(metricsContext, throwable);
         if (!(throwable instanceof DiscardOldJobException)) {
             log.error("execute job error " + str, throwable);
         }
@@ -314,21 +353,16 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
         consumer.setConsumeThreadMax(consumeThreadMax);
         consumeThreadMin = Math.min(consumeThreadMin, consumeThreadMax);
         consumer.setConsumeThreadMin(consumeThreadMin);
+        consumer.setMessageModel(messageModel);
         consumer.setInstanceName(MqMessageUtil.getInstanceName(nameServer));
-
+        // 添加基于topic线程池配置
+        if (null != topicThreadPoolConfig) {
+            consumer.setTopicThreadPoolConfig(handleTopicThreadPoolConfig(topicThreadPoolConfig));
+        }
+        // 监控
+        consumer.setThreadPoolMeterRegistry(threadPoolMeterRegistry);
         //设置最大批量消费数量
         consumer.setConsumeMessageBatchMaxSize(consumeMessageBatchMaxSize);
-
-        switch (messageModel) {
-            case BROADCASTING:
-                consumer.setMessageModel(MessageModel.BROADCASTING);
-                break;
-            case CLUSTERING:
-                consumer.setMessageModel(MessageModel.CLUSTERING);
-                break;
-            default:
-                throw new IllegalArgumentException("Property 'messageModel' was wrong.");
-        }
 
         switch (selectorType) {
             case TAG:
@@ -361,7 +395,19 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
         if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {
             ((RocketMQPushConsumerLifecycleListener) rocketMQListener).prepareStart(consumer);
         }
+    }
 
+    private Map<String, ConsumerThreadPoolConfig> handleTopicThreadPoolConfig(Map<String, ConsumerThreadPoolConfig> topicThreadPoolConfig) {
+        topicThreadPoolConfig.forEach((topic, consumerThreadPoolConfig) -> {
+            Integer consumeThreadMin = consumerThreadPoolConfig.getConsumeThreadMin();
+            Integer consumeThreadMax = consumerThreadPoolConfig.getConsumeThreadMax();
+            if (null != consumeThreadMin || null != consumeThreadMax) {
+                consumerThreadPoolConfig.setConsumeThreadMax(null == consumeThreadMax ? defaultConsumeThreadMax : consumeThreadMax);
+                consumerThreadPoolConfig.setConsumeThreadMin(null == consumeThreadMin ? Math.min(defaultConsumeThreadMin, consumerThreadPoolConfig.getConsumeThreadMax())
+                        : Math.min(consumeThreadMin, consumerThreadPoolConfig.getConsumeThreadMax()));
+            }
+        });
+        return topicThreadPoolConfig;
     }
 
 }

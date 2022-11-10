@@ -4,10 +4,14 @@ package com.cloud.platform.rocketmq.core;
 import com.cloud.mq.base.core.CloudMQTemplate;
 import com.cloud.mq.base.dto.BatchMessage;
 import com.cloud.mq.base.dto.PushMessage;
+import com.cloud.mq.base.enums.DelayLevelEnum;
 import com.cloud.mq.base.utils.BatchMsgUtil;
 import com.cloud.mq.base.utils.ValuesUtil;
-import com.cloud.mq.base.enums.DelayLevelEnum;
 import com.cloud.platform.common.domain.response.BaseResponse;
+import com.cloud.platform.rocketmq.RocketMQProperties;
+import com.cloud.platform.rocketmq.metrics.MQMetrics;
+import com.cloud.platform.rocketmq.metrics.ProducerTimingSampleContext;
+import com.cloud.platform.rocketmq.utils.MetricsUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.messaging.MessagingException;
 import org.springframework.util.Assert;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -41,11 +46,23 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
 
     @Getter
     @Setter
+    private MQMetrics metrics;
+
+    @Getter
+    @Setter
+    private RocketMQProperties.Metrics metricsProperty;
+
+    @Getter
+    @Setter
     private String charset = "UTF-8";
 
-    //随机选择队列
+    /**
+     * 随机选择队列
+     */
     private static final MessageQueueSelector SELECT_QUEUE_BY_RANDOM = new SelectMessageQueueByRandom();
-    //hash选择队列
+    /**
+     * hash选择队列
+     */
     private static final MessageQueueSelector SELECT_QUEUE_BY_HASH = new SelectMessageQueueByHash();
 
     @Override
@@ -214,6 +231,18 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
             log.info("Failed to initiate the MessageBatch,topic:{}", topic);
             throw new MessagingException(e.getMessage(), e);
         }
+        int sentBytes = messageBatch.getBody().length;
+
+        ProducerTimingSampleContext batchMetricsContext = null;
+        if (metricsProperty.isEnabled() && metrics != null) {
+            // 按eventCode分组监控
+            List<String> eventCodes = messageList.stream()
+                    .map(Message::getTags)
+                    .distinct()
+                    .collect(Collectors.toList());
+            batchMetricsContext = metrics.startBatchProduce(topic, eventCodes);
+        }
+
         SendResult sendResult;
         try {
             long now = System.currentTimeMillis();
@@ -229,9 +258,13 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
                 log.debug("send batchMessage cost: {} ms", costTime);
             }
 
+            MetricsUtil.recordProduce(metricsProperty, metrics, batchMetricsContext, sendResult.getSendStatus(),
+                    sentBytes, null);
+
             return handleSendResult(sendResult);
         } catch (Exception e) {
-            log.info("sendBatch failed. topic:{}, message:{} ,exception:{}", batchMessages.getTopic(), messageList,
+            MetricsUtil.recordProduce(metricsProperty, metrics, batchMetricsContext, null, sentBytes, e);
+            log.error("sendBatch failed. topic:{}, message:{} ,exception:{}", batchMessages.getTopic(), messageList,
                     e.getMessage());
             throw new MessagingException(e.getMessage(), e);
         }
@@ -252,9 +285,14 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
     private BaseResponse<Object> send(String topic, String eventCode, String key, Object payload, Object hashBy,
                                       long timeoutMs, Integer delayTimeLevel) {
         ValuesUtil.checkTopicAndEventCode(topic, eventCode);
+        ProducerTimingSampleContext metricsContext = MetricsUtil.startProduce(metricsProperty, metrics, topic, eventCode);
+        long sentBytes = 0;
         try {
             long now = System.currentTimeMillis();
             Message rocketMsg = convertToRocketMsg(topic, eventCode, key, payload);
+            if (rocketMsg.getBody() != null) {
+                sentBytes = rocketMsg.getBody().length;
+            }
             SendResult sendResult;
             if (Objects.nonNull(delayTimeLevel)) {
                 rocketMsg.setDelayTimeLevel(delayTimeLevel);
@@ -267,9 +305,12 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
             long costTime = System.currentTimeMillis() - now;
             log.debug("send message cost: {} ms, msgId:{}", costTime, sendResult.getMsgId());
 
+            MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, sendResult.getSendStatus(),
+                    sentBytes, null);
             return handleSendResult(sendResult);
         } catch (Exception e) {
-            log.info("syncSend failed. topic:{}, eventCode:{}, message:{} ,exception:{}",
+            MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, null, sentBytes, e);
+            log.error("syncSend failed. topic:{}, eventCode:{}, message:{} ,exception:{}",
                     topic, eventCode, payload, e.getMessage());
             throw new MessagingException(e.getMessage(), e);
         }
@@ -313,9 +354,14 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
     private void sendOneway(String topic, String eventCode, String key, Object payload, Object hashBy, long timeoutMs,
                             DelayLevelEnum delayLevelEnum) {
         ValuesUtil.checkTopicAndEventCode(topic, eventCode);
+        ProducerTimingSampleContext metricsContext = MetricsUtil.startProduce(metricsProperty, metrics, topic, eventCode);
+        long sentBytes = 0;
         try {
             long now = System.currentTimeMillis();
             Message rocketMsg = convertToRocketMsg(topic, eventCode, key, payload);
+            if (rocketMsg.getBody() != null) {
+                sentBytes = rocketMsg.getBody().length;
+            }
             if (Objects.nonNull(delayLevelEnum)) {
                 rocketMsg.setDelayTimeLevel(delayLevelEnum.getCode());
             }
@@ -328,8 +374,12 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
             if (log.isDebugEnabled()) {
                 log.debug("send oneway message cost: {} ms", costTime);
             }
+            // 单向发送 默认消息发送OK
+            MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, SendStatus.SEND_OK,
+                    sentBytes, null);
         } catch (Exception e) {
-            log.info("sendOneway failed. topic:{}, eventCode:{}, message:{} ,exception:{}",
+            MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, null, sentBytes, e);
+            log.error("sendOneway failed. topic:{}, eventCode:{}, message:{} ,exception:{}",
                     topic, eventCode, payload, e.getMessage());
             throw new MessagingException(e.getMessage(), e);
         }

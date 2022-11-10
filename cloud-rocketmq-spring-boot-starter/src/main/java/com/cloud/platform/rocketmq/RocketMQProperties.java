@@ -1,7 +1,10 @@
 package com.cloud.platform.rocketmq;
 
 import lombok.Data;
+import org.apache.rocketmq.client.impl.consumer.ConsumerThreadPoolConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.Map;
 
 /**
  * rocketMQ配置
@@ -31,6 +34,16 @@ public class RocketMQProperties {
      * key: consumer_group,需要和spring bean 同名；value：consumer配置信息
      */
     private Consumer consumer;
+
+    /**
+     * 监控
+     */
+    private Metrics metrics = new Metrics();
+
+    /**
+     * 基于topic线程池配置key:topic value:config
+     */
+    private Map<String, ConsumerThreadPoolConfig> consumerThreadPool;
 
 
     @Data
@@ -78,7 +91,7 @@ public class RocketMQProperties {
         /**
          * 消息体最大2M.
          */
-        private int maxMessageSize = 1024 * 1024 * 2; // 2M
+        private int maxMessageSize = 1024 * 1024 * 2;
 
     }
 
@@ -138,10 +151,24 @@ public class RocketMQProperties {
         private int consumeMessageBatchMaxSize = 1;
 
         /**
-         * 是否开启消息轨迹
+         * 是否开启消息轨迹，默认为false
          */
         private boolean enableMsgTrace = false;
 
+    }
+
+    @Data
+    public static class Metrics {
+
+        /**
+         * 开启metrics.
+         */
+        private boolean enabled = true;
+
+        /**
+         * 最大metrics label数量.
+         */
+        private int maxLabelCount = 50;
     }
 
 

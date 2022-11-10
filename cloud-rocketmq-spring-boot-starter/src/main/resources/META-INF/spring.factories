@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.cloud.platform.rocketmq.RocketMQAutoConfiguration
+com.cloud.platform.rocketmq.RocketMQAutoConfiguration,\
+com.cloud.platform.rocketmq.metrics.MQMetricsAutoConfiguration

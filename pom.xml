@@ -67,7 +67,7 @@
         </dependency>
         <!-- rocketmq config start -->
         <dependency>
-            <groupId>org.apache.rocketmq</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>rocketmq-client</artifactId>
             <version>${rocketmq-version}</version>
         </dependency>
