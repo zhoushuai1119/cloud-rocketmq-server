@@ -1,5 +1,6 @@
 package com.cloud.platform.rocketmq.metrics.impl;
 
+import com.cloud.platform.common.constants.PlatformCommonConstant;
 import com.cloud.platform.rocketmq.metrics.ConsumerTimingSampleContext;
 import com.cloud.platform.rocketmq.metrics.MQMetrics;
 import com.cloud.platform.rocketmq.metrics.ProducerTimingSampleContext;
@@ -16,16 +17,11 @@ import java.util.List;
  */
 public class MQMetricsImpl implements MQMetrics {
     private MeterRegistry registry;
-    private Counter globalProduceBytes;
     private Counter globalProduceCount;
 
     public MQMetricsImpl(MeterRegistry registry) {
         this.registry = registry;
 
-        globalProduceBytes = Counter.builder("mq.global.produce")
-                .baseUnit("bytes")
-                .description("mq producer send total bytes")
-                .register(registry);
         globalProduceCount = Counter.builder("mq.global.produce.count")
                 .description("mq producer send total count")
                 .register(registry);
@@ -42,7 +38,7 @@ public class MQMetricsImpl implements MQMetrics {
 
     @Override
     public ProducerTimingSampleContext startProduce(String topic, String eventCode) {
-        if (ProducerTimingSampleContextImpl.TOPIC_TIME_TASK_FEEDBACK.equals(topic)) {
+        if (PlatformCommonConstant.FeedBackTopic.FEEDBACK_TASK_TOPIC.equals(topic)) {
             //定时任务反馈不计入监控
             return null;
         }
@@ -55,7 +51,7 @@ public class MQMetricsImpl implements MQMetrics {
 
     @Override
     public ProducerTimingSampleContext startBatchProduce(String topic, List<String> eventCodes) {
-        if (ProducerTimingSampleContextImpl.TOPIC_TIME_TASK_FEEDBACK.equals(topic)) {
+        if (PlatformCommonConstant.FeedBackTopic.FEEDBACK_TASK_TOPIC.equals(topic)) {
             //定时任务反馈不计入监控
             return null;
         }
@@ -71,9 +67,6 @@ public class MQMetricsImpl implements MQMetrics {
         try {
             if (context != null) {
                 context.record(sendStatus, throwable);
-                if (globalProduceBytes != null) {
-                    globalProduceBytes.increment(totalBytes);
-                }
                 if (globalProduceCount != null) {
                     globalProduceCount.increment();
                 }

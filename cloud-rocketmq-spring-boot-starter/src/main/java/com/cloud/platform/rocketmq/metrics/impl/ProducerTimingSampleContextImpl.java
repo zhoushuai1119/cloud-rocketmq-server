@@ -19,7 +19,6 @@ public class ProducerTimingSampleContextImpl implements ProducerTimingSampleCont
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
     public static final String PRODUCER_METRICS_NAME = "mq.producer";
-    public static final String TOPIC_TIME_TASK_FEEDBACK = "TP_F_FB";
     private final Timer.Sample timerSample;
     private MeterRegistry registry;
     private String topic;
