@@ -55,21 +55,20 @@ public class ProducerTimingSampleContextImpl implements ProducerTimingSampleCont
 
     /**
      * 生成tags
-     *
      * @param topic
      * @param eventCode
+     * @param sendStatus
      * @param throwable
      * @return
      */
     private List<Tag> generateTags(String topic, String eventCode, SendStatus sendStatus, Throwable throwable) {
-        String status = null;
+        String status = "UNKNOWN";
         if (sendStatus != null) {
             status = sendStatus.name();
         } else if (throwable != null) {
             status = "FAILURE";
-        } else {
-            status = "UNKNOWN";
         }
         return Arrays.asList(Tag.of("key", topic + "#" + eventCode), Tag.of("status", status), exception(throwable));
     }
+
 }

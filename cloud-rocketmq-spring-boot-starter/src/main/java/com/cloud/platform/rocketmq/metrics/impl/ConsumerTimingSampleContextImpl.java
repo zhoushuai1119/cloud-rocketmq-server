@@ -1,5 +1,6 @@
 package com.cloud.platform.rocketmq.metrics.impl;
 
+import com.cloud.platform.common.constants.PlatformCommonConstant;
 import com.cloud.platform.rocketmq.metrics.ConsumerTimingSampleContext;
 import io.micrometer.core.instrument.LongTaskTimer;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -9,6 +10,7 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @description: 消费端Metrics
@@ -19,10 +21,8 @@ public class ConsumerTimingSampleContextImpl implements ConsumerTimingSampleCont
 
     private static final Tag EXCEPTION_NONE = Tag.of("exception", "None");
     public static final String CONSUME_METRICS_NAME = "mq.consumer";
-    private static final String TIMEDTASK_LONG_TIME_METRICS_NAME = "mq.timedtask.longtime";
-    private static final String TIMEDTASK_METRICS_NAME = "mq.timedtask";
-
-    private static final String TPOIC_TIMETASK = "TP_F_SC";
+    private static final String TIMEDTASK_LONG_TIME_METRICS_NAME = "mq.timed.task.longtime";
+    private static final String TIMEDTASK_METRICS_NAME = "mq.timed.task";
 
     private final Timer.Sample timerSample;
     private final LongTaskTimer.Sample longTaskTimerSample;
@@ -45,7 +45,7 @@ public class ConsumerTimingSampleContextImpl implements ConsumerTimingSampleCont
         this.registry = registry;
         this.retry = reconsumeTimes > 0;
 
-        if (TPOIC_TIMETASK.equals(topic)) {
+        if (Objects.equals(PlatformCommonConstant.ScheduledJobTopic.SCHEDULED_JOB_TOPIC, topic)) {
             //定时任务
             this.longTaskTimerSample = LongTaskTimer.builder(TIMEDTASK_LONG_TIME_METRICS_NAME)
                     .tag("eventCode", eventCode)
@@ -59,12 +59,12 @@ public class ConsumerTimingSampleContextImpl implements ConsumerTimingSampleCont
 
     public void record(Throwable throwable) {
         try {
-            this.timerSample.stop(Timer.builder(getTagName())
+            this.timerSample.stop(Timer.builder(getMeterName())
                     .tags(generateTags(throwable))
                     .register(registry));
 
-            if (longTaskTimerSample != null) {
-                longTaskTimerSample.stop();
+            if (this.longTaskTimerSample != null) {
+                this.longTaskTimerSample.stop();
             }
         } catch (Exception e) {
             //ignore
@@ -75,8 +75,16 @@ public class ConsumerTimingSampleContextImpl implements ConsumerTimingSampleCont
         return exception == null ? EXCEPTION_NONE : Tag.of("exception", exception.getClass().getSimpleName());
     }
 
-    private String getTagName() {
-        return TPOIC_TIMETASK.equals(topic) ? TIMEDTASK_METRICS_NAME : CONSUME_METRICS_NAME;
+    /**
+     * 获取消费者指标名称
+     *
+     * @return
+     */
+    private String getMeterName() {
+        if (Objects.equals(PlatformCommonConstant.ScheduledJobTopic.SCHEDULED_JOB_TOPIC, topic)) {
+            return TIMEDTASK_METRICS_NAME;
+        }
+        return CONSUME_METRICS_NAME;
     }
 
     /**
@@ -86,7 +94,7 @@ public class ConsumerTimingSampleContextImpl implements ConsumerTimingSampleCont
      * @return
      */
     private List<Tag> generateTags(@Nullable Throwable throwable) {
-        if (TPOIC_TIMETASK.equals(topic)) {
+        if (PlatformCommonConstant.ScheduledJobTopic.SCHEDULED_JOB_TOPIC.equals(topic)) {
             return Arrays.asList(Tag.of("eventCode", eventCode), exception(throwable));
         } else {
             return Arrays.asList(Tag.of("key", topic + "#" + eventCode), Tag.of("retry", retry ? "true" : "false"), exception(throwable));
