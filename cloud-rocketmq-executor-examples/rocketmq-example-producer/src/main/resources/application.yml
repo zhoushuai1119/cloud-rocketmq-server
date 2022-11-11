@@ -18,6 +18,15 @@ cloud:
       accessKey: zhoushuai
       secretKey: zs19921119
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
     RocketmqClient: error

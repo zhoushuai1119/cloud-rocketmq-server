@@ -16,13 +16,19 @@ cloud:
     consumer:
       #消费者组名称
       group-name: c-example-consumer
-    consumerThreadPool:
-      topic:
-        consumeThreadMin: 50
     #acl权限认证
     acl:
       accessKey: zhoushuai
       secretKey: zs19921119
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
 
 
 logging:

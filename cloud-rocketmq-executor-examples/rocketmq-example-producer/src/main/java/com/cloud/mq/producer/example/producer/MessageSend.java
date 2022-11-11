@@ -34,6 +34,7 @@ public class MessageSend {
             cloudMQTemplate.send("TP_TEST_TOPIC", "EC_TEST_CODE", message);
         }*/
         cloudMQTemplate.send("TP_DTO_TEST_TOPIC", "EC_TEST_DTO", new SendDTO("zhoushuai",28));
+        //cloudMQTemplate.send("TP_DTO_TEST_TOPIC", "EC_TEST_DTO", "111");
         return BaseResponse.createSuccessResult(null);
     }
 
