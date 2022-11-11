@@ -38,7 +38,6 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 
