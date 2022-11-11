@@ -9,7 +9,6 @@ import com.cloud.platform.rocketmq.enums.ConsumeMode;
 import com.cloud.platform.rocketmq.enums.SelectorType;
 import com.cloud.platform.rocketmq.metrics.MQMetrics;
 import com.google.common.base.Joiner;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -208,8 +207,6 @@ public class RocketMQAutoConfiguration {
         @Autowired(required = false)
         private TimeBasedJobProperties timeBasedJobProperties;
 
-        @Autowired(required = false)
-        private MeterRegistry meterRegistry;
 
         public ListenerContainerConfiguration() {
 
@@ -370,8 +367,6 @@ public class RocketMQAutoConfiguration {
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_METRICS, mqMetrics);
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_METRICS_PROPERTY, rocketMQProperties.getMetrics() == null ? new RocketMQProperties.Metrics() : rocketMQProperties.getMetrics());
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.PROP_CONSUME_MESSAGE_BATCH_MAX_SIZE, customConsumeMessageBatchMaxSize);
-            beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.TOPIC_THREAD_POOL_MAP, rocketMQProperties.getConsumerThreadPool());
-            beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.THREAD_POOL_METER_REGISTRY, meterRegistry);
             beanBuilder.addPropertyValue(DefaultRocketMQListenerContainerConstants.RPC_HOOK, aclRPCHook);
             beanBuilder.setDestroyMethodName(DefaultRocketMQListenerContainerConstants.METHOD_DESTROY);
 

@@ -1,11 +1,7 @@
 package com.cloud.platform.rocketmq;
 
 import lombok.Data;
-import org.apache.rocketmq.client.impl.consumer.ConsumerThreadPoolConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * rocketMQ配置
@@ -40,11 +36,6 @@ public class RocketMQProperties {
      * 监控
      */
     private Metrics metrics = new Metrics();
-
-    /**
-     * 基于topic线程池配置key:topic value:config
-     */
-    private Map<String, ConsumerThreadPoolConfig> consumerThreadPool = new HashMap<>();
 
 
     @Data

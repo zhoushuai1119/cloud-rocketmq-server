@@ -14,7 +14,6 @@ import com.cloud.platform.rocketmq.metrics.MQMetrics;
 import com.cloud.platform.rocketmq.timedjob.TimeBasedJobFeedback;
 import com.cloud.platform.rocketmq.timedjob.TimeBasedJobMessage;
 import com.cloud.platform.rocketmq.utils.MqMessageUtil;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -111,10 +110,6 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
 
     @Setter
     @Getter
-    private Map<String, ConsumerThreadPoolConfig> topicThreadPoolConfig;
-
-    @Setter
-    @Getter
     private int discardTaskSeconds;
 
     @Getter
@@ -144,9 +139,6 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
     @Getter
     private int consumeMessageBatchMaxSize;
 
-    @Setter
-    @Getter
-    private MeterRegistry threadPoolMeterRegistry;
 
     @Override
     public void destroy() {
@@ -355,12 +347,6 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
         consumer.setConsumeThreadMin(consumeThreadMin);
         consumer.setMessageModel(messageModel);
         consumer.setInstanceName(MqMessageUtil.getInstanceName(nameServer));
-        // 添加基于topic线程池配置
-        if (null != topicThreadPoolConfig) {
-            consumer.setTopicThreadPoolConfig(handleTopicThreadPoolConfig(topicThreadPoolConfig));
-        }
-        // 监控
-        consumer.setThreadPoolMeterRegistry(threadPoolMeterRegistry);
         //设置最大批量消费数量
         consumer.setConsumeMessageBatchMaxSize(consumeMessageBatchMaxSize);
 
