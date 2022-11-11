@@ -37,7 +37,6 @@ public class ProducerTimingSampleContextImpl implements ProducerTimingSampleCont
         this.eventCode = eventCode;
         this.registry = registry;
         this.timerSample = Timer.start(registry);
-
     }
 
     @Override

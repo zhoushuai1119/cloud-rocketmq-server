@@ -55,7 +55,6 @@ public class ConsumerTimingSampleContextImpl implements ConsumerTimingSampleCont
             this.longTaskTimerSample = null;
         }
         this.timerSample = Timer.start(registry);
-
     }
 
     public void record(Throwable throwable) {

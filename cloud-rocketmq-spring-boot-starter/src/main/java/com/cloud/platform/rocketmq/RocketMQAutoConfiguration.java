@@ -8,7 +8,9 @@ import com.cloud.platform.rocketmq.core.*;
 import com.cloud.platform.rocketmq.enums.ConsumeMode;
 import com.cloud.platform.rocketmq.enums.SelectorType;
 import com.cloud.platform.rocketmq.metrics.MQMetrics;
+import com.cloud.platform.rocketmq.metrics.impl.MQMetricsImpl;
 import com.google.common.base.Joiner;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -158,6 +160,12 @@ public class RocketMQAutoConfiguration {
         return producer;
     }
 
+    @Bean
+    @ConditionalOnClass({MeterRegistry.class})
+    public MQMetrics getProducerMetrics(MeterRegistry registry) {
+        return new MQMetricsImpl(registry);
+    }
+
     /**
      * mq 事务消息模板类
      *
@@ -165,23 +173,25 @@ public class RocketMQAutoConfiguration {
      * @return
      */
     @Bean(destroyMethod = "destroy")
-    @ConditionalOnBean(TransactionMQProducer.class)
+    @ConditionalOnBean({TransactionMQProducer.class, MQMetrics.class})
     @ConditionalOnMissingBean(name = "rocketMQTransactionTemplate")
-    public RocketMQTransactionTemplate rocketMQTransactionTemplate(TransactionMQProducer mqProducer, RocketMQProperties properties) {
+    public RocketMQTransactionTemplate rocketMQTransactionTemplate(TransactionMQProducer mqProducer, MQMetrics mqMetrics, RocketMQProperties properties) {
         RocketMQTransactionTemplate rocketMQTransactionTemplate = new RocketMQTransactionTemplate();
         rocketMQTransactionTemplate.setProducer(mqProducer);
-        rocketMQTransactionTemplate.setMetricsProperty(properties.getMetrics() == null ? new RocketMQProperties.Metrics() : properties.getMetrics());
+        rocketMQTransactionTemplate.setMetrics(mqMetrics);
+        rocketMQTransactionTemplate.setMetricsProperty(properties.getMetrics());
         return rocketMQTransactionTemplate;
     }
 
 
     @Bean(destroyMethod = "destroy")
-    @ConditionalOnBean(DefaultMQProducer.class)
+    @ConditionalOnBean({DefaultMQProducer.class, MQMetrics.class})
     @ConditionalOnMissingBean(name = "rocketMQTemplate")
-    public RocketMQTemplate rocketMQTemplate(DefaultMQProducer mqProducer, RocketMQProperties properties) {
+    public RocketMQTemplate rocketMQTemplate(DefaultMQProducer mqProducer, MQMetrics mqMetrics, RocketMQProperties properties) {
         RocketMQTemplate rocketMQTemplate = new RocketMQTemplate();
         rocketMQTemplate.setProducer(mqProducer);
-        rocketMQTemplate.setMetricsProperty(properties.getMetrics() == null ? new RocketMQProperties.Metrics() : properties.getMetrics());
+        rocketMQTemplate.setMetrics(mqMetrics);
+        rocketMQTemplate.setMetricsProperty(properties.getMetrics());
         return rocketMQTemplate;
     }
 
