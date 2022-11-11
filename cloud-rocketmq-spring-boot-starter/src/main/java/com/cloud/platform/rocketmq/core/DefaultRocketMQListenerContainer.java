@@ -23,7 +23,6 @@ import org.apache.rocketmq.client.consumer.MessageSelector;
 import org.apache.rocketmq.client.consumer.listener.*;
 import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragelyByCircle;
 import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.client.impl.consumer.ConsumerThreadPoolConfig;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.remoting.RPCHook;
@@ -381,19 +380,6 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
         if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {
             ((RocketMQPushConsumerLifecycleListener) rocketMQListener).prepareStart(consumer);
         }
-    }
-
-    private Map<String, ConsumerThreadPoolConfig> handleTopicThreadPoolConfig(Map<String, ConsumerThreadPoolConfig> topicThreadPoolConfig) {
-        topicThreadPoolConfig.forEach((topic, consumerThreadPoolConfig) -> {
-            Integer consumeThreadMin = consumerThreadPoolConfig.getConsumeThreadMin();
-            Integer consumeThreadMax = consumerThreadPoolConfig.getConsumeThreadMax();
-            if (null != consumeThreadMin || null != consumeThreadMax) {
-                consumerThreadPoolConfig.setConsumeThreadMax(null == consumeThreadMax ? defaultConsumeThreadMax : consumeThreadMax);
-                consumerThreadPoolConfig.setConsumeThreadMin(null == consumeThreadMin ? Math.min(defaultConsumeThreadMin, consumerThreadPoolConfig.getConsumeThreadMax())
-                        : Math.min(consumeThreadMin, consumerThreadPoolConfig.getConsumeThreadMax()));
-            }
-        });
-        return topicThreadPoolConfig;
     }
 
 }
