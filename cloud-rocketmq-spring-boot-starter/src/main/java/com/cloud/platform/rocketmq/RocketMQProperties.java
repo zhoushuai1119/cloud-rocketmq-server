@@ -12,7 +12,7 @@ public class RocketMQProperties {
 
     /**
      * nameServer.
-     * 格式: `host:port;host:port`
+     * 格式: `host1:port;host2:port`
      */
     private String nameServer;
 
@@ -153,19 +153,16 @@ public class RocketMQProperties {
     public static class Metrics {
 
         /**
-         * 开启metrics.
+         * 是否开启metrics. 默认开启
          */
         private boolean enabled = true;
 
-        /**
-         * 最大metrics label数量.
-         */
-        private int maxLabelCount = 50;
     }
 
 
     @Data
     public static class TransactionExecutorConf {
+
         private int corePoolSize = 5;
 
         private int maximumPoolSize = 10;
