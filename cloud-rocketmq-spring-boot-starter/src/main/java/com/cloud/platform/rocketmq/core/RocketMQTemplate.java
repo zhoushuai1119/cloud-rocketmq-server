@@ -35,7 +35,6 @@ import static com.cloud.platform.rocketmq.utils.MqMessageUtil.convertToRocketMsg
 
 /**
  * rocketMQ发送模板
- *
  */
 @Slf4j
 public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, DisposableBean {
@@ -93,11 +92,6 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
         return send(topic, eventCode, null, payload, null, producer.getSendMsgTimeout(), delayTimeLevel.getCode());
     }
 
-
-    @Override
-    public void asyncSend(String topic, String eventCode, Object payload, SendCallback sendCallback) {
-         asyncSend(topic, eventCode, payload, producer.getSendMsgTimeout(),sendCallback);
-    }
 
     /**
      * 发送
@@ -309,30 +303,6 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
         }
     }
 
-    /**
-     * 发送
-     *
-     * @param topic          topic
-     * @param eventCode      eventCode
-     * @param payload        消息体
-     * @param timeoutMs      超时毫秒数
-     * @return 发送结果
-     */
-    private void asyncSend(String topic, String eventCode, Object payload, long timeoutMs,SendCallback sendCallback) {
-        ValuesUtil.checkTopicAndEventCode(topic, eventCode);
-        try {
-            long now = System.currentTimeMillis();
-            Message rocketMsg = convertToRocketMsg(topic, eventCode,null, payload);
-            producer.send(rocketMsg, sendCallback, timeoutMs);
-            long costTime = System.currentTimeMillis() - now;
-            log.debug("asyncSend message cost: {} ms", costTime);
-        } catch (Exception e) {
-            log.info("asyncSend failed. topic:{}, eventCode:{}, message:{} ,exception:{}",
-                    topic, eventCode, payload, e.getMessage());
-            throw new MessagingException(e.getMessage(), e);
-        }
-    }
-
 
     /**
      * 发送（Oneway）
@@ -391,4 +361,5 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
         }
         return result;
     }
+
 }
