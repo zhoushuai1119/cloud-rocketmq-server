@@ -38,7 +38,7 @@ public class BatchProducerTimingSampleContextImpl implements ProducerTimingSampl
                     timerSample.stop(Timer.builder(ProducerTimingSampleContextImpl.PRODUCER_METRICS_NAME)
                             .tags(generateTags(this.topic, eventCode, sendStatus, throwable))
                             .register(registry)));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             //ignore
         }
     }
@@ -56,13 +56,11 @@ public class BatchProducerTimingSampleContextImpl implements ProducerTimingSampl
      * @return
      */
     private List<Tag> generateTags(String topic, String eventCode, SendStatus sendStatus, Throwable throwable) {
-        String status = null;
+        String status = "UNKNOWN";
         if (sendStatus != null) {
             status = sendStatus.name();
         } else if (throwable != null) {
             status = "FAILURE";
-        } else {
-            status = "UNKNOWN";
         }
         return Arrays.asList(Tag.of("key", topic + "#" + eventCode), Tag.of("type", "batch"), Tag.of("status", status),
                 exception(throwable));

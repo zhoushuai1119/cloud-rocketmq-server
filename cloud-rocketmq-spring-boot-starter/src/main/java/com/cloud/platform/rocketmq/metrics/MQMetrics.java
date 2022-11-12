@@ -11,12 +11,27 @@ import java.util.List;
  */
 public interface MQMetrics {
 
-    ConsumerTimingSampleContext startConsume(String topic, String eventCode, int reconsumeTimes);
-
     ProducerTimingSampleContext startProduce(String topic, String eventCode);
 
     ProducerTimingSampleContext startBatchProduce(String topic, List<String> eventCodes);
 
-    void recordProduce(ProducerTimingSampleContext context, SendStatus sendStatus, long totalBytes, Throwable throwable);
+    /**
+     * 记录生产者 Metrics 信息
+     *
+     * @param context
+     * @param sendStatus
+     * @param throwable
+     */
+    void recordProduce(ProducerTimingSampleContext context, SendStatus sendStatus, Throwable throwable);
+
+    ConsumerTimingSampleContext startConsume(String topic, String eventCode, int reconsumeTimes);
+
+    /**
+     * 记录消费者 Metrics 信息
+     *
+     * @param context
+     * @param throwable
+     */
+    void recordConsumer(ConsumerTimingSampleContext metricsContext, Throwable throwable);
 
 }

@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @description: 生产端Metrics
+ * @description: 生产者 Metrics
  * @author: zhou shuai
  * @date: 2022/11/10 20:10
  */
@@ -44,7 +44,7 @@ public class ProducerTimingSampleContextImpl implements ProducerTimingSampleCont
             this.timerSample.stop(Timer.builder(PRODUCER_METRICS_NAME)
                     .tags(generateTags(this.topic, this.eventCode, sendStatus, throwable))
                     .register(registry));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             //ignore
         }
     }

@@ -106,13 +106,9 @@ public class RocketMQTransactionTemplate implements CloudTransactionMQTemplate, 
     private BaseResponse<Object> sendImpl(String topic, String eventCode, String key, Object payload, Object arg) {
         ValuesUtil.checkTopicAndEventCode(topic, eventCode);
         ProducerTimingSampleContext metricsContext = MetricsUtil.startProduce(metricsProperty, metrics, topic, eventCode);
-        long sentBytes = 0;
         try {
             long now = System.currentTimeMillis();
             Message rocketMsg = MqMessageUtil.convertToRocketMsg(topic, eventCode, key, payload);
-            if (rocketMsg.getBody() != null) {
-                sentBytes = rocketMsg.getBody().length;
-            }
             //如果不使用 sendMessageInTransaction 方法，当做普通消息发送
             TransactionSendResult sendResult = producer.sendMessageInTransaction(rocketMsg, arg);
             long costTime = System.currentTimeMillis() - now;
@@ -134,11 +130,10 @@ public class RocketMQTransactionTemplate implements CloudTransactionMQTemplate, 
                 result.setModel(sendResult);
             }
 
-            MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, sendResult.getSendStatus(), sentBytes,
-                    null);
+            MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, sendResult.getSendStatus(), null);
             return result;
         } catch (Exception e) {
-            MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, null, sentBytes, e);
+            MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, null, e);
             log.info("syncSend failed. topic:{}, eventCode:{}, message:{} ", topic, eventCode, payload);
             throw new MessagingException(e.getMessage(), e);
         }

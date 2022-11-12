@@ -7,6 +7,5 @@ import org.apache.rocketmq.client.producer.SendStatus;
  * @author zhoushuai
  */
 public interface ProducerTimingSampleContext {
-
     void record(SendStatus sendStatus, Throwable throwable);
 }

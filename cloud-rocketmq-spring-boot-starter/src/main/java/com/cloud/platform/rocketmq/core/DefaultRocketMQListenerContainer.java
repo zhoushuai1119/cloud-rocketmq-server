@@ -13,6 +13,7 @@ import com.cloud.platform.rocketmq.metrics.ConsumerTimingSampleContext;
 import com.cloud.platform.rocketmq.metrics.MQMetrics;
 import com.cloud.platform.rocketmq.timedjob.TimeBasedJobFeedback;
 import com.cloud.platform.rocketmq.timedjob.TimeBasedJobMessage;
+import com.cloud.platform.rocketmq.utils.MetricsUtil;
 import com.cloud.platform.rocketmq.utils.MqMessageUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -206,20 +207,19 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
 
     private void consumeInner(MessageExt messageExt) throws Exception {
         long now = System.currentTimeMillis();
-        //判断是否是定时任务，定时任务异步执行
-        ConsumerTimingSampleContext metricsContext = null;
-        if (metricsProperty.isEnabled() && metrics != null) {
-            metricsContext = metrics.startConsume(messageExt.getTopic(), messageExt.getTags(), messageExt.getReconsumeTimes());
-        }
+        ConsumerTimingSampleContext metricsContext = MetricsUtil.startConsumer(metricsProperty, metrics,
+                messageExt.getTopic(), messageExt.getTags(), messageExt.getReconsumeTimes());
 
         if (TimeBasedJobProperties.JOB_TOPIC.equals(messageExt.getTopic())) {
             handleTimeBasedJob(messageExt, metricsContext);
         } else {
             try {
                 rocketMQListener.onMessage(MqMessageUtil.doConvertMessageExtByClass(messageExt, messageType, true));
-                recordMetrics(metricsContext, null);
+                //记录消费者情况
+                MetricsUtil.recordConsumer(metricsProperty, metrics, metricsContext, null);
             } catch (Exception e) {
-                recordMetrics(metricsContext, e);
+                //记录消费者情况
+                MetricsUtil.recordConsumer(metricsProperty, metrics, metricsContext, e);
                 //if (messageExt.getReconsumeTimes() >= consumer)
                 throw e;
             }
@@ -285,7 +285,8 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
                     } catch (Exception e) {
                         log.error("send job execute feedback error", e);
                     }
-                    recordMetrics(metricsContext, null);
+                    //记录消费者情况
+                    MetricsUtil.recordConsumer(metricsProperty, metrics, metricsContext, null);
                 } catch (Throwable throwable) {
                     handleTimeBasedJobException(str, finalTimeBasedJob, throwable, metricsContext);
                 }
@@ -295,14 +296,11 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Dispo
         }
     }
 
-    private void recordMetrics(ConsumerTimingSampleContext metricsContext, Throwable e) {
-        if (metricsContext != null) {
-            metricsContext.record(e);
-        }
-    }
 
     private void handleTimeBasedJobException(String str, TimeBasedJobMessage timeBasedJobMessage, Throwable throwable, ConsumerTimingSampleContext metricsContext) {
-        recordMetrics(metricsContext, throwable);
+        //记录消费者情况
+        MetricsUtil.recordConsumer(metricsProperty, metrics, metricsContext, throwable);
+
         if (!(throwable instanceof DiscardOldJobException)) {
             log.error("execute job error " + str, throwable);
         }

@@ -1,7 +1,7 @@
 package com.cloud.platform.rocketmq.metrics;
 
 /**
- * @description: 消费端Metrics
+ * @description: 消费者 Metrics
  * @author: zhou shuai
  * @date: 2022/11/10 13:59
  */

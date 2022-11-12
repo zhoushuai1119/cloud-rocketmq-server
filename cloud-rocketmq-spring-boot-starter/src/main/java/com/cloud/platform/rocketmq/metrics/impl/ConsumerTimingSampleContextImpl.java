@@ -66,7 +66,7 @@ public class ConsumerTimingSampleContextImpl implements ConsumerTimingSampleCont
             if (this.longTaskTimerSample != null) {
                 this.longTaskTimerSample.stop();
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             //ignore
         }
     }
