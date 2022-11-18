@@ -93,8 +93,8 @@ public class RocketMQAutoConfiguration {
         Assert.hasText(nameServer, "[rocketmq.name-server] must not be null");
         Assert.hasText(groupName, "[rocketmq.producer.group] must not be null");
 
-        boolean isEnableMsgTrace = rocketMQProperties.getProducer().isEnableMsgTrace();
-        String customizedTraceTopic = rocketMQProperties.getProducer().getCustomizedTraceTopic();
+        boolean isEnableMsgTrace = producerConfig.isEnableMsgTrace();
+        String customizedTraceTopic = producerConfig.getCustomizedTraceTopic();
 
         DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroupName(), aclRPCHook, producerConfig.isEnableMsgTrace(), customizedTraceTopic);
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
@@ -130,9 +130,12 @@ public class RocketMQAutoConfiguration {
         //事务生产者组名称
         String transactionGroupName = tranProCustomModel.getGroupName() + "-transaction";
 
+        boolean isEnableMsgTrace = producerConfigModel.isEnableMsgTrace();
+        String customizedTraceTopic = producerConfigModel.getCustomizedTraceTopic();
+
         //设置属性--事务消息生产
         //TransactionMQProducer producer = new TransactionMQProducer(groupName);
-        TransactionMQProducer producer = new TransactionMQProducer(null, transactionGroupName, aclRPCHook, tranProCustomModel.isEnableMsgTrace(), null);
+        TransactionMQProducer producer = new TransactionMQProducer(null, transactionGroupName, aclRPCHook, isEnableMsgTrace, customizedTraceTopic);
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
         producer.setSendMsgTimeout(tranProCustomModel.getSendMsgTimeout());
         producer.setRetryTimesWhenSendFailed(tranProCustomModel.getRetryTimesWhenSendFailed());
