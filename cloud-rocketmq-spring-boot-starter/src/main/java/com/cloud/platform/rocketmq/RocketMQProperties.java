@@ -1,6 +1,7 @@
 package com.cloud.platform.rocketmq;
 
 import lombok.Data;
+import org.apache.rocketmq.common.topic.TopicValidator;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -79,6 +80,11 @@ public class RocketMQProperties {
          * 是否开启消息轨迹
          */
         private boolean enableMsgTrace = false;
+
+        /**
+         * The name value of message trace topic.If you don't config,you can use the default trace topic name.
+         */
+        private String customizedTraceTopic = TopicValidator.RMQ_SYS_TRACE_TOPIC;
 
         /**
          * 消息体最大2M.

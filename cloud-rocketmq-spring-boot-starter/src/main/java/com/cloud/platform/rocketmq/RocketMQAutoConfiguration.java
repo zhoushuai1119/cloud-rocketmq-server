@@ -88,10 +88,15 @@ public class RocketMQAutoConfiguration {
     public DefaultMQProducer mqProducer(RocketMQProperties rocketMQProperties, AclClientRPCHook aclRPCHook) {
 
         RocketMQProperties.Producer producerConfig = rocketMQProperties.getProducer();
+        String nameServer = rocketMQProperties.getNameServer();
         String groupName = producerConfig.getGroupName();
-        Assert.hasText(groupName, "[cloud.rocketmq.producer.groupName] must not be null");
+        Assert.hasText(nameServer, "[rocketmq.name-server] must not be null");
+        Assert.hasText(groupName, "[rocketmq.producer.group] must not be null");
 
-        DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroupName(), aclRPCHook, producerConfig.isEnableMsgTrace(), null);
+        boolean isEnableMsgTrace = rocketMQProperties.getProducer().isEnableMsgTrace();
+        String customizedTraceTopic = rocketMQProperties.getProducer().getCustomizedTraceTopic();
+
+        DefaultMQProducer producer = new DefaultMQProducer(producerConfig.getGroupName(), aclRPCHook, producerConfig.isEnableMsgTrace(), customizedTraceTopic);
         producer.setNamesrvAddr(rocketMQProperties.getNameServer());
         producer.setSendMsgTimeout(producerConfig.getSendMsgTimeout());
         producer.setRetryTimesWhenSendFailed(producerConfig.getRetryTimesWhenSendFailed());
