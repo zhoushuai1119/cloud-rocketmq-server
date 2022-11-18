@@ -222,7 +222,7 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
         try {
             messageBatch = BatchMsgUtil.batch(messageList, producer);
         } catch (MQClientException e) {
-            log.info("Failed to initiate the MessageBatch,topic:{}", topic);
+            log.error("Failed to initiate the MessageBatch,topic:{}", topic);
             throw new MessagingException(e.getMessage(), e);
         }
 
@@ -291,7 +291,7 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
                 sendResult = producer.send(rocketMsg, SELECT_QUEUE_BY_HASH, hashBy, timeoutMs);
             }
             long costTime = System.currentTimeMillis() - now;
-            log.debug("send message cost: {} ms, msgId:{}", costTime, sendResult.getMsgId());
+            log.info("send message cost: {} ms, msgId:{}", costTime, sendResult.getMsgId());
 
             MetricsUtil.recordProduce(metricsProperty, metrics, metricsContext, sendResult.getSendStatus(), null);
             return handleSendResult(sendResult);
