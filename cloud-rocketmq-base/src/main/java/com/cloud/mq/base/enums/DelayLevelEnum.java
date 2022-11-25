@@ -1,5 +1,6 @@
 package com.cloud.mq.base.enums;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -9,6 +10,7 @@ import lombok.Getter;
  * @Date 2019/10/23 11:44
  */
 @Getter
+@AllArgsConstructor
 public enum DelayLevelEnum {
     L_1s(1, "1s" ),
     L_5s(2 , "5s" ),
@@ -31,11 +33,7 @@ public enum DelayLevelEnum {
     ;
 
     private Integer code;
-    private String codeDesc;
 
-    DelayLevelEnum(Integer code, String codeDesc) {
-        this.code = code;
-        this.codeDesc = codeDesc;
-    }
+    private String codeDesc;
 
 }

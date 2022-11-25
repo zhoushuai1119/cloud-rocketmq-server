@@ -77,22 +77,6 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
         }
     }
 
-
-    /**
-     * 同步发送延时消息
-     *
-     * @param topic          topic
-     * @param eventCode      eventCode
-     * @param payload        消息体
-     * @param delayTimeLevel 延时级别
-     * @return 发送结果
-     */
-    @Override
-    public BaseResponse<Object> send(String topic, String eventCode, Object payload, DelayLevelEnum delayTimeLevel) {
-        return send(topic, eventCode, null, payload, null, producer.getSendMsgTimeout(), delayTimeLevel.getCode());
-    }
-
-
     /**
      * 发送
      *
@@ -105,6 +89,7 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
     public BaseResponse<Object> send(String topic, String eventCode, Object payload) {
         return send(topic, eventCode, null, payload, null, producer.getSendMsgTimeout(), null);
     }
+
 
     /**
      * 发送
@@ -120,6 +105,22 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
         return send(topic, eventCode, null, payload, null, timeoutMs, null);
     }
 
+
+    /**
+     * 同步发送延时消息
+     *
+     * @param topic          topic
+     * @param eventCode      eventCode
+     * @param payload        消息体
+     * @param delayTimeLevel 延时级别
+     * @return 发送结果
+     */
+    @Override
+    public BaseResponse<Object> send(String topic, String eventCode, Object payload, Integer delayLevel) {
+        return send(topic, eventCode, null, payload, null, producer.getSendMsgTimeout(), delayLevel);
+    }
+
+
     /**
      * 根据hashBy的hash值发送至特定queue同步发送
      *
@@ -134,31 +135,6 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
         return send(topic, eventCode, null, payload, hashBy, producer.getSendMsgTimeout(), null);
     }
 
-
-    /**
-     * 发送消息 单向发送
-     *
-     * @param pushMessage 消息
-     */
-    @Override
-    public void sendOneway(PushMessage pushMessage) {
-        sendOneway(pushMessage.getTopic(), pushMessage.getEventCode(), pushMessage.getKey(), pushMessage.getPayload(),
-                pushMessage.getHashBy(),
-                ValuesUtil.nullOrDefault(pushMessage.getTimeoutMs(), producer.getSendMsgTimeout()),
-                ValuesUtil.nullOrDefault(pushMessage.getDelayTimeLevel(), null));
-    }
-
-    /**
-     * 发送消息 单向发送
-     *
-     * @param topic     topic
-     * @param eventCode eventCode
-     * @param payload   消息体
-     */
-    @Override
-    public void sendOneway(String topic, String eventCode, Object payload) {
-        sendOneway(topic, eventCode, null, payload, null, producer.getSendMsgTimeout(), null);
-    }
 
     /**
      * 根据hashBy的hash值发送至特定queue同步发送
@@ -260,6 +236,32 @@ public class RocketMQTemplate implements CloudMQTemplate, InitializingBean, Disp
                     e.getMessage());
             throw new MessagingException(e.getMessage(), e);
         }
+    }
+
+
+    /**
+     * 发送消息 单向发送
+     *
+     * @param pushMessage 消息
+     */
+    @Override
+    public void sendOneway(PushMessage pushMessage) {
+        sendOneway(pushMessage.getTopic(), pushMessage.getEventCode(), pushMessage.getKey(), pushMessage.getPayload(),
+                pushMessage.getHashBy(),
+                ValuesUtil.nullOrDefault(pushMessage.getTimeoutMs(), producer.getSendMsgTimeout()),
+                ValuesUtil.nullOrDefault(pushMessage.getDelayTimeLevel(), null));
+    }
+
+    /**
+     * 发送消息 单向发送
+     *
+     * @param topic     topic
+     * @param eventCode eventCode
+     * @param payload   消息体
+     */
+    @Override
+    public void sendOneway(String topic, String eventCode, Object payload) {
+        sendOneway(topic, eventCode, null, payload, null, producer.getSendMsgTimeout(), null);
     }
 
 

@@ -4,7 +4,6 @@ package com.cloud.mq.base.core;
 
 import com.cloud.mq.base.dto.BatchMessage;
 import com.cloud.mq.base.dto.PushMessage;
-import com.cloud.mq.base.enums.DelayLevelEnum;
 import com.cloud.platform.common.domain.response.BaseResponse;
 
 /**
@@ -39,10 +38,10 @@ public interface CloudMQTemplate {
      * @param topic          topic
      * @param eventCode      eventCode
      * @param payload        消息体
-     * @param delayTimeLevel 延时级别
+     * @param delayLevel 延时级别
      * @return 发送结果
      */
-    BaseResponse<Object> send(String topic, String eventCode, Object payload, DelayLevelEnum delayTimeLevel);
+    BaseResponse<Object> send(String topic, String eventCode, Object payload, Integer delayLevel);
 
 
     /**
